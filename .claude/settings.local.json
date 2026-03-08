@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(wmic logicaldisk get:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm config:*)",
+      "Bash(node -e:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(timeout 30 npx next build:*)",
+      "Bash(timeout 60 npx next build:*)",
+      "Bash(npx next build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(where:*)",
+      "Bash(sc query:*)",
+      "Bash(timeout 15 npm run dev:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\nurmi\\Downloads\\bagdarai-your-future-path-main\\bagdarai-your-future-path-main\\src\\components\\ui",
+      "c:\\Users\\nurmi\\.claude\\projects\\c--Users-nurmi-OneDrive-Desktop-----------infomatrix-BagdarAL\\memory"
+    ]
+  }
+}
