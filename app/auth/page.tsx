@@ -74,7 +74,7 @@ export default function AuthPage() {
 
     if (result.success) {
       const role = selectedRole as string;
-      router.push(redirectMap[role] || "/");
+      window.location.href = redirectMap[role] || "/";
     } else {
       const errKey = result.error || "";
       const translated = errorMap[errKey]?.[language] || errKey;
