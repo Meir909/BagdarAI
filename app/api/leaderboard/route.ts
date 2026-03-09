@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     if (!currentUserEntry) {
       const myUser = await prisma.user.findUnique({ 
         where: { id: session.userId },
-        select: { id: true, name: true, studentClass: true, schoolId: true }
+        select: { id: true, name: true, studentClass: true, schoolId: true, createdAt: true }
       });
       if (myUser) {
         const countAbove = await prisma.user.count({
