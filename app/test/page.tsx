@@ -3,13 +3,43 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage, Language } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import PageTransition from "@/components/PageTransition";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { careerQuestions } from "@/data/questions";
+import {
+  riasecQuestions,
+  calculateRiasecScores,
+  getHollandCode,
+  getSuggestedCareers,
+  DIMENSION_LABELS,
+  RiasecDimension,
+} from "@/data/riasec-questions";
+
+const DIMENSION_COLORS: Record<RiasecDimension, string> = {
+  R: "bg-orange-500",
+  I: "bg-blue-500",
+  A: "bg-purple-500",
+  S: "bg-green-500",
+  E: "bg-red-500",
+  C: "bg-yellow-500",
+};
+
+const DIMENSION_BG: Record<RiasecDimension, string> = {
+  R: "bg-orange-500/10 border-orange-500/30",
+  I: "bg-blue-500/10 border-blue-500/30",
+  A: "bg-purple-500/10 border-purple-500/30",
+  S: "bg-green-500/10 border-green-500/30",
+  E: "bg-red-500/10 border-red-500/30",
+  C: "bg-yellow-500/10 border-yellow-500/30",
+};
+
+const RATING_LABELS = {
+  en: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"],
+  ru: ["Совсем нет", "Скорее нет", "Нейтрально", "Скорее да", "Полностью да"],
+  kk: ["Мүлде жоқ", "Жоқ сияқты", "Бейтарап", "Иә сияқты", "Толықтай иә"],
+};
 
 export default function CareerTestPage() {
   return (
@@ -21,47 +51,58 @@ export default function CareerTestPage() {
 
 function CareerTest() {
   const { language } = useLanguage();
-  const { user } = useAuth();
   const router = useRouter();
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const question = careerQuestions[current];
-  const total = careerQuestions.length;
+  const question = riasecQuestions[current];
+  const total = riasecQuestions.length;
   const progress = ((current + 1) / total) * 100;
+  const answeredCount = Object.keys(answers).length;
 
-  const handleSelect = (optionIndex: number) => {
-    setAnswers((prev) => ({ ...prev, [question.id]: optionIndex }));
+  const handleRate = (rating: number) => {
+    setAnswers((prev) => ({ ...prev, [question.id]: rating }));
   };
 
   const handleFinish = async () => {
     setSubmitting(true);
 
-    // Build answers array for API
-    const answersArray = careerQuestions.map((q) => ({
+    const scores = calculateRiasecScores(answers);
+    const hollandCode = getHollandCode(scores);
+    const suggestedCareers = getSuggestedCareers(scores);
+
+    // Build answers array for API with RIASEC metadata
+    const answersArray = riasecQuestions.map((q) => ({
       questionId: q.id,
       questionText: q[language as Language] || q.en,
-      selectedOption: q.options[answers[q.id] ?? 0]?.[language as Language] || q.options[answers[q.id] ?? 0]?.en || "",
-      category: q.options[answers[q.id] ?? 0]?.category || q.category,
+      dimension: q.dimension,
+      dimensionName: DIMENSION_LABELS[q.dimension][language as Language] || DIMENSION_LABELS[q.dimension].en,
+      rating: answers[q.id] ?? 3,
     }));
 
     try {
       const res = await fetch("/api/career-test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: answersArray, language }),
+        body: JSON.stringify({
+          answers: answersArray,
+          riasecScores: scores,
+          hollandCode,
+          suggestedCareers,
+          language,
+        }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        // Store result in sessionStorage for analysis page
         if (typeof window !== "undefined") {
           sessionStorage.setItem("careerResult", JSON.stringify(data.result));
+          sessionStorage.setItem("riasecScores", JSON.stringify(scores));
+          sessionStorage.setItem("hollandCode", hollandCode);
         }
         router.push("/analysis");
       } else {
-        // Still navigate to analysis (it can show error or cached result)
         router.push("/analysis");
       }
     } catch {
@@ -69,17 +110,29 @@ function CareerTest() {
     }
   };
 
+  const currentRating = answers[question.id];
+  const isAnswered = currentRating !== undefined;
+  const canGoNext = isAnswered && current < total - 1;
+  const canFinish = isAnswered && current === total - 1;
+
+  const labels = RATING_LABELS[language as keyof typeof RATING_LABELS] || RATING_LABELS.en;
+
   return (
     <PageTransition>
       <div className="min-h-screen pt-16">
         <div className="container max-w-2xl mx-auto px-4 py-12">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <h1 className="font-heading font-bold text-xl">
-                {{ en: "Career Test", ru: "Карьерный тест", kk: "Мансап тесті" }[language]}
-              </h1>
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h1 className="font-heading font-bold text-xl">
+                  {{ en: "RIASEC Career Test", ru: "RIASEC Карьерный тест", kk: "RIASEC Мансап тесті" }[language]}
+                </h1>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {{ en: "Holland Code personality assessment", ru: "Тест личности по методу Холланда", kk: "Холланд әдісімен жеке тұлғаны бағалау" }[language]}
+                </p>
+              </div>
+              <span className="text-sm text-muted-foreground font-medium">
                 {current + 1} / {total}
               </span>
             </div>
@@ -91,6 +144,16 @@ function CareerTest() {
                 transition={{ duration: 0.3 }}
               />
             </div>
+            {/* Dimension indicator */}
+            <div className="flex items-center gap-2 mt-3">
+              <span className={`w-2.5 h-2.5 rounded-full ${DIMENSION_COLORS[question.dimension]}`} />
+              <span className="text-xs text-muted-foreground">
+                {DIMENSION_LABELS[question.dimension][language as Language] || DIMENSION_LABELS[question.dimension].en}
+              </span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                {{ en: "Answered", ru: "Отвечено", kk: "Жауапталды" }[language]}: {answeredCount}/{total}
+              </span>
+            </div>
           </div>
 
           {/* Question card */}
@@ -101,24 +164,35 @@ function CareerTest() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -40 }}
               transition={{ duration: 0.25 }}
-              className="bg-card border border-border rounded-2xl p-8 shadow-card mb-6"
+              className={`border rounded-2xl p-8 shadow-card mb-6 ${DIMENSION_BG[question.dimension]}`}
             >
-              <h2 className="font-heading font-semibold text-xl mb-6 leading-relaxed">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-4">
+                {{ en: "How much do you agree?", ru: "Насколько ты согласен?", kk: "Сен қаншалықты келісесің?" }[language]}
+              </p>
+              <h2 className="font-heading font-semibold text-xl mb-8 leading-relaxed">
                 {(question[language as Language] as string) || question.en}
               </h2>
 
+              {/* Likert scale */}
               <div className="space-y-3">
-                {question.options.map((opt, i) => (
+                {[1, 2, 3, 4, 5].map((rating) => (
                   <button
-                    key={i}
-                    onClick={() => handleSelect(i)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all ${
-                      answers[question.id] === i
+                    key={rating}
+                    onClick={() => handleRate(rating)}
+                    className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-center gap-3 ${
+                      currentRating === rating
                         ? "bg-primary/10 border-primary text-foreground"
-                        : "bg-background border-border hover:border-primary/40 hover:bg-muted/50"
+                        : "bg-background/60 border-border hover:border-primary/40 hover:bg-muted/50"
                     }`}
                   >
-                    <span className="text-sm">{(opt[language as Language] as string) || opt.en}</span>
+                    <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
+                      currentRating === rating
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/30 text-muted-foreground"
+                    }`}>
+                      {rating}
+                    </span>
+                    <span className="text-sm">{labels[rating - 1]}</span>
                   </button>
                 ))}
               </div>
@@ -141,7 +215,7 @@ function CareerTest() {
               <Button
                 className="flex-1 rounded-full"
                 onClick={() => setCurrent((c) => c + 1)}
-                disabled={answers[question.id] === undefined}
+                disabled={!isAnswered}
               >
                 {{ en: "Next", ru: "Далее", kk: "Келесі" }[language]}
                 <ChevronRight className="h-4 w-4 ml-1" />
@@ -150,7 +224,7 @@ function CareerTest() {
               <Button
                 className="flex-1 rounded-full shadow-[var(--shadow-button)]"
                 onClick={handleFinish}
-                disabled={answers[question.id] === undefined || submitting}
+                disabled={!canFinish || submitting}
               >
                 {submitting ? (
                   <span className="flex items-center gap-2">

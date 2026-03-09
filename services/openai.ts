@@ -13,6 +13,14 @@ export interface QuizAnswer {
   category: string;
 }
 
+export interface RiasecQuizAnswer {
+  questionId: number;
+  questionText: string;
+  dimension: string;
+  dimensionName: string;
+  rating: number; // 1-5 Likert scale
+}
+
 export interface CareerAnalysisResult {
   personalitySummary: string;
   topCareers: Array<{
@@ -49,7 +57,10 @@ export interface RoadmapResult {
 }
 
 export async function generateCareerAnalysis(
-  answers: QuizAnswer[],
+  answers: RiasecQuizAnswer[],
+  riasecScores: { R: number; I: number; A: number; S: number; E: number; C: number },
+  hollandCode: string,
+  suggestedCareers: { en: string; ru: string; kk: string }[],
   language: "en" | "ru" | "kk" = "ru"
 ): Promise<CareerAnalysisResult> {
   const langInstruction = {
@@ -58,26 +69,54 @@ export async function generateCareerAnalysis(
     kk: "Қазақ тілінде жауап бер.",
   }[language];
 
-  const answersText = answers
-    .map((a) => `Q: ${a.questionText}\nA: ${a.selectedOption} (Category: ${a.category})`)
-    .join("\n\n");
+  const dimensionNames: Record<string, string> = {
+    R: "Realistic",
+    I: "Investigative",
+    A: "Artistic",
+    S: "Social",
+    E: "Enterprising",
+    C: "Conventional",
+  };
+
+  const scoresText = Object.entries(riasecScores)
+    .sort(([, a], [, b]) => b - a)
+    .map(([dim, score]) => `  ${dimensionNames[dim]} (${dim}): ${score}/35`)
+    .join("\n");
+
+  const suggestedText = suggestedCareers.map((c) => c.en).join(", ");
 
   const prompt = `You are BagdarAI, a career guidance AI for students aged 14-18 in Kazakhstan. ${langInstruction}
 
-Analyze these career test answers and provide personalized career guidance:
+The student completed a RIASEC (Holland Code) personality assessment with 42 questions rated 1-5.
 
-${answersText}
+RIASEC SCORES:
+${scoresText}
+
+HOLLAND CODE: ${hollandCode}
+(First letter = strongest personality type, second = second strongest, etc.)
+
+RIASEC-SUGGESTED CAREERS based on top 2 dimensions: ${suggestedText}
+
+RIASEC DIMENSION MEANINGS:
+- R (Realistic): Practical, hands-on, likes working with tools/machines/nature
+- I (Investigative): Analytical, intellectual, loves research and problem-solving
+- A (Artistic): Creative, expressive, prefers freedom and self-expression
+- S (Social): Helping, teaching, working with people, empathetic
+- E (Enterprising): Leadership, persuasion, business, entrepreneurship
+- C (Conventional): Organized, detail-oriented, data, structured work
+
+Based on this RIASEC profile, provide personalized career guidance for a student in Kazakhstan.
 
 Respond with a valid JSON object (no markdown, no code blocks) with this exact structure:
 {
-  "personalitySummary": "2-3 sentence personality description based on the answers",
+  "personalitySummary": "2-3 sentences describing their personality based on the Holland Code ${hollandCode} and their scores. Mention their dominant types.",
   "topCareers": [
-    {"name": "Career Name in English", "nameRu": "Career Name in Russian", "nameKk": "Career Name in Kazakh", "match": 95, "description": "Why this career suits them"},
+    {"name": "Career Name in English", "nameRu": "Career Name in Russian", "nameKk": "Career Name in Kazakh", "match": 95, "description": "Why this career suits their RIASEC profile"},
     {"name": "...", "nameRu": "...", "nameKk": "...", "match": 88, "description": "..."},
     {"name": "...", "nameRu": "...", "nameKk": "...", "match": 82, "description": "..."}
   ],
-  "strengths": ["strength1", "strength2", "strength3", "strength4"],
-  "skillsToDevelop": ["skill1", "skill2", "skill3"],
+  "strengths": ["strength1 based on RIASEC profile", "strength2", "strength3", "strength4"],
+  "skillsToDevelop": ["skill1 to complement their profile", "skill2", "skill3"],
   "roadmap": [
     {"step": 1, "title": "Step title", "description": "What to do", "timeframe": "Now - 6 months"},
     {"step": 2, "title": "...", "description": "...", "timeframe": "6-18 months"},

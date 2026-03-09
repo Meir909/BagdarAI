@@ -7,7 +7,7 @@ import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GraduationCap, Users, BookOpen, UserCheck, ArrowLeft, Shield } from "lucide-react";
+import { GraduationCap, Users, BookOpen, UserCheck, ArrowLeft, Shield, Lock } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
 
 const roleConfig = [
@@ -130,7 +130,8 @@ export default function AuthPage() {
     );
   }
 
-  const roleInfo = roleConfig.find((r) => r.role === selectedRole);
+  const adminRoleInfo = { icon: Lock, color: "text-red-500", bg: "bg-red-500/10", label: { en: "Admin", ru: "Администратор", kk: "Әкімші" }, desc: { en: "System administration", ru: "Администрирование системы", kk: "Жүйені басқару" } };
+  const roleInfo = selectedRole === "admin" ? adminRoleInfo : roleConfig.find((r) => r.role === selectedRole);
 
   return (
     <PageTransition>
