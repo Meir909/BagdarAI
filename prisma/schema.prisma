@@ -50,11 +50,15 @@ model User {
   child    User?   @relation("ParentChild", fields: [childId], references: [id])
   parentOf User?   @relation("ParentChild")
 
-  careerTests   CareerTest[]
-  careerResults CareerResult[]
-  chatHistory   ChatMessage[]
-  studentBadges StudentBadge[]
-  auditLogs     AuditLog[]
+  careerTests        CareerTest[]
+  careerResults      CareerResult[]
+  chatHistory        ChatMessage[]
+  studentBadges      StudentBadge[]
+  auditLogs          AuditLog[]
+  xp                 UserXP?
+  simulationResults  SimulationResult[]
+  userQuests         UserQuest[]
+  npcMessages        NpcMessage[]
 
   @@index([role])
   @@index([schoolId])
@@ -161,4 +165,122 @@ model AuditLog {
 
   @@index([action])
   @@index([createdAt])
+}
+
+// ─── GAME SYSTEM ─────────────────────────────────────────────────────────────
+
+model UserXP {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xp        Int      @default(0)
+  level     Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  @@index([xp])
+}
+
+// ─── CAREER SIMULATIONS ──────────────────────────────────────────────────────
+
+model CareerSimulation {
+  id            String   @id @default(cuid())
+  careerId      String
+  title         String
+  titleRu       String
+  titleKk       String
+  description   String
+  descriptionRu String
+  descriptionKk String
+  difficulty    String   // easy | medium | hard
+  estimatedTime Int      // minutes
+  xpReward      Int      @default(50)
+  scenarios     Json     // SimulationScenario[]
+  category      String
+  createdAt     DateTime @default(now())
+
+  results SimulationResult[]
+
+  @@index([careerId])
+  @@index([category])
+}
+
+model SimulationResult {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  simulationId String
+  simulation   CareerSimulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  score        Int
+  maxScore     Int
+  choices      Json             // which options the user picked
+  xpEarned     Int
+  completedAt  DateTime         @default(now())
+
+  @@unique([userId, simulationId])
+  @@index([userId])
+}
+
+// ─── DAILY QUESTS ────────────────────────────────────────────────────────────
+
+model DailyQuest {
+  id          String @id @default(cuid())
+  type        String // simulation | profession | mentor | test | chat
+  title       String
+  titleRu     String
+  titleKk     String
+  description String
+  descriptionRu String
+  descriptionKk String
+  xpReward    Int
+  icon        String @default("⚡")
+
+  userQuests UserQuest[]
+}
+
+model UserQuest {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questId     String
+  quest       DailyQuest @relation(fields: [questId], references: [id], onDelete: Cascade)
+  completed   Boolean    @default(false)
+  completedAt DateTime?
+  assignedAt  DateTime   @default(now())
+  expiresAt   DateTime   // next day 00:00
+
+  @@unique([userId, questId, assignedAt])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── NPC MENTORS ─────────────────────────────────────────────────────────────
+
+model NpcMentor {
+  id           String @id @default(cuid())
+  slug         String @unique
+  name         String
+  profession   String
+  professionRu String
+  professionKk String
+  personality  String
+  introMessage String
+  introMessageRu String
+  introMessageKk String
+  avatarEmoji  String @default("🤖")
+  category     String
+
+  messages NpcMessage[]
+}
+
+model NpcMessage {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  npcId     String
+  npc       NpcMentor @relation(fields: [npcId], references: [id], onDelete: Cascade)
+  role      String    // user | assistant
+  content   String
+  createdAt DateTime  @default(now())
+
+  @@index([userId, npcId])
 }

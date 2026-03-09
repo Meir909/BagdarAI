@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { professionsData } from "../data/professions";
+import { simulations } from "../data/simulations";
+import { npcMentors } from "../data/npc-mentors";
+import { questTemplates } from "../data/daily-quests";
 
 const prisma = new PrismaClient();
 
@@ -229,7 +232,76 @@ async function main() {
 
   console.log(`✅ ${professionCount} professions seeded`);
 
-  // 9. Create Audit Log for seeding
+  // 9. Seed Career Simulations
+  let simCount = 0;
+  for (const sim of simulations) {
+    const simId = `sim-${sim.careerId}`;
+    await prisma.careerSimulation.upsert({
+      where: { id: simId },
+      update: {
+        title: sim.title, titleRu: sim.titleRu, titleKk: sim.titleKk,
+        description: sim.description, descriptionRu: sim.descriptionRu, descriptionKk: sim.descriptionKk,
+        difficulty: sim.difficulty, estimatedTime: sim.estimatedTime,
+        xpReward: sim.xpReward, scenarios: sim.scenarios as object[], category: sim.category,
+      },
+      create: {
+        id: simId,
+        careerId: sim.careerId,
+        title: sim.title, titleRu: sim.titleRu, titleKk: sim.titleKk,
+        description: sim.description, descriptionRu: sim.descriptionRu, descriptionKk: sim.descriptionKk,
+        difficulty: sim.difficulty, estimatedTime: sim.estimatedTime,
+        xpReward: sim.xpReward, scenarios: sim.scenarios as object[], category: sim.category,
+      },
+    });
+    simCount++;
+  }
+  console.log(`✅ ${simCount} simulations seeded`);
+
+  // 10. Seed NPC Mentors
+  let npcCount = 0;
+  for (const npc of npcMentors) {
+    await prisma.npcMentor.upsert({
+      where: { slug: npc.slug },
+      update: {
+        name: npc.name, profession: npc.profession, professionRu: npc.professionRu, professionKk: npc.professionKk,
+        personality: npc.personality,
+        introMessage: npc.introMessage, introMessageRu: npc.introMessageRu, introMessageKk: npc.introMessageKk,
+        avatarEmoji: npc.avatarEmoji, category: npc.category,
+      },
+      create: {
+        slug: npc.slug, name: npc.name, profession: npc.profession,
+        professionRu: npc.professionRu, professionKk: npc.professionKk,
+        personality: npc.personality,
+        introMessage: npc.introMessage, introMessageRu: npc.introMessageRu, introMessageKk: npc.introMessageKk,
+        avatarEmoji: npc.avatarEmoji, category: npc.category,
+      },
+    });
+    npcCount++;
+  }
+  console.log(`✅ ${npcCount} NPC mentors seeded`);
+
+  // 11. Seed Daily Quest Templates
+  let questCount = 0;
+  for (const q of questTemplates) {
+    const questId = `quest-${q.type}-${q.title.toLowerCase().replace(/\s+/g, "-")}`;
+    await prisma.dailyQuest.upsert({
+      where: { id: questId },
+      update: {
+        type: q.type, title: q.title, titleRu: q.titleRu, titleKk: q.titleKk,
+        description: q.description, descriptionRu: q.descriptionRu, descriptionKk: q.descriptionKk,
+        xpReward: q.xpReward, icon: q.icon,
+      },
+      create: {
+        id: questId, type: q.type, title: q.title, titleRu: q.titleRu, titleKk: q.titleKk,
+        description: q.description, descriptionRu: q.descriptionRu, descriptionKk: q.descriptionKk,
+        xpReward: q.xpReward, icon: q.icon,
+      },
+    });
+    questCount++;
+  }
+  console.log(`✅ ${questCount} daily quest templates seeded`);
+
+  // 12. Create Audit Log for seeding
   await prisma.auditLog.create({
     data: {
       userId: admin.id,

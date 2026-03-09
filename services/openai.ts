@@ -244,6 +244,25 @@ Respond with valid JSON (no markdown):
   }
 }
 
+export async function npcChat(
+  npcSystemPrompt: string,
+  history: ChatMessage[],
+  userMessage: string
+): Promise<string> {
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: "user", content: npcSystemPrompt },
+    ...history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+    { role: "user", content: userMessage },
+  ];
+
+  const response = await openai.chat.completions.create({
+    model: MODEL,
+    messages,
+  });
+
+  return response.choices[0].message.content || "I apologize, I couldn't respond right now. Please try again.";
+}
+
 export async function explainProfession(
   professionName: string,
   language: "en" | "ru" | "kk" = "ru"

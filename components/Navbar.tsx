@@ -23,10 +23,13 @@ const roleNavMap: Record<string, { to: string; label: Record<string, string> }[]
     { to: "/curator-dashboard", label: { en: "My Students", ru: "Мои ученики", kk: "Менің оқушыларым" } },
   ],
   student: [
-    { to: "/test", label: { en: "Test", ru: "Тест", kk: "Тест" } },
-    { to: "/professions", label: { en: "Professions", ru: "Профессии", kk: "Мамандықтар" } },
-    { to: "/dashboard", label: { en: "Dashboard", ru: "Панель", kk: "Панель" } },
-    { to: "/chat", label: { en: "AI Chat", ru: "Чат", kk: "Чат" } },
+    { to: "/dashboard",    label: { en: "Dashboard",    ru: "Панель",       kk: "Панель"         } },
+    { to: "/test",         label: { en: "Tests",        ru: "Тесты",        kk: "Тесттер"        } },
+    { to: "/simulations",  label: { en: "Simulations",  ru: "Симуляции",    kk: "Симуляциялар"   } },
+    { to: "/mentors",      label: { en: "Mentors",      ru: "Менторы",      kk: "Менторлар"      } },
+    { to: "/quests",       label: { en: "Quests",       ru: "Задания",      kk: "Тапсырмалар"    } },
+    { to: "/leaderboard",  label: { en: "Leaderboard",  ru: "Рейтинг",      kk: "Рейтинг"        } },
+    { to: "/professions",  label: { en: "Professions",  ru: "Профессии",    kk: "Мамандықтар"    } },
   ],
   parent: [
     { to: "/parent", label: { en: "Child Report", ru: "Отчёт ребёнка", kk: "Бала есебі" } },

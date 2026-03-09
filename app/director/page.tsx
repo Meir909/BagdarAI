@@ -240,10 +240,10 @@ function DirectorDashboard() {
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={interestData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`} labelLine={false}>
+                      <Pie data={interestData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ""} ${Math.round((percent ?? 0) * 100)}%`} labelLine={false}>
                         {interestData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(v: number) => [`${v} ${language === "ru" ? "уч." : language === "kk" ? "оқ." : "st."}`, ""]} />
+                      <Tooltip formatter={(v) => [`${v} ${language === "ru" ? "уч." : language === "kk" ? "оқ." : "st."}`, ""]} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
