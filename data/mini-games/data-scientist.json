@@ -1,0 +1,89 @@
+{
+  "id": "data-scientist-game",
+  "career": "Data Scientist",
+  "title": "Data Analysis Challenge",
+  "description": "Analyze real datasets and make data-driven decisions",
+  "difficulty": "medium",
+  "duration": 300,
+  "xp_reward": 30,
+  "category": "science",
+  "icon": "📊",
+  "tasks": [
+    {
+      "task_id": "chart-selection",
+      "task": "You have sales data over 12 months. Which chart best shows trends over time?",
+      "dataset": "Monthly sales: [1200, 1350, 1100, 1450, 1600, 1550, 1700, 1850, 1750, 1900, 2100, 2050]",
+      "choices": [
+        "Pie Chart",
+        "Line Chart", 
+        "Bar Chart",
+        "Scatter Plot"
+      ],
+      "correct_answer": 1,
+      "explanation": "Line charts are perfect for showing trends and changes over time, making them ideal for monthly sales data.",
+      "xp_reward": 10
+    },
+    {
+      "task_id": "correlation-analysis",
+      "task": "You find that ice cream sales and drowning incidents both increase in summer. What's the relationship?",
+      "scenario": "Data shows: Ice cream sales ↑, Temperature ↑, Drowning incidents ↑",
+      "choices": [
+        "Ice cream causes drowning",
+        "Drowning causes ice cream sales",
+        "Both are caused by hot weather (confounding variable)",
+        "No relationship exists"
+      ],
+      "correct_answer": 2,
+      "explanation": "This is a classic example of correlation vs causation. Hot weather causes both increased ice cream sales and more swimming (leading to more drowning incidents).",
+      "xp_reward": 15
+    },
+    {
+      "task_id": "outlier-detection",
+      "task": "In this dataset of student ages: [18, 19, 20, 21, 22, 23, 45], what should you do with the value 45?",
+      "choices": [
+        "Remove it immediately",
+        "Investigate why it's different",
+        "Change it to the average",
+        "Ignore it completely"
+      ],
+      "correct_answer": 1,
+      "explanation": "Outliers should be investigated, not automatically removed. It could be a mature student, data entry error, or important edge case.",
+      "xp_reward": 10
+    },
+    {
+      "task_id": "statistical-test",
+      "task": "You want to know if a new teaching method improved test scores. Which test should you use?",
+      "scenario": "Before method: Mean=75, n=30. After method: Mean=82, n=30. Same students.",
+      "choices": [
+        "Chi-square test",
+        "T-test (paired)",
+        "ANOVA",
+        "Regression analysis"
+      ],
+      "correct_answer": 1,
+      "explanation": "A paired t-test is perfect for comparing the same group's performance before and after an intervention.",
+      "xp_reward": 15
+    },
+    {
+      "task_id": "machine-learning",
+      "task": "Your model has 95% accuracy but terrible performance on minority class. What's the issue?",
+      "scenario": "Dataset: 95% class A, 5% class B. Model predicts class A every time.",
+      "choices": [
+        "Overfitting",
+        "Class imbalance problem",
+        "Underfitting",
+        "Wrong algorithm"
+      ],
+      "correct_answer": 1,
+      "explanation": "With severe class imbalance, a model can achieve high accuracy by always predicting the majority class. Use balanced accuracy, F1-score, or resampling techniques.",
+      "xp_reward": 15
+    }
+  ],
+  "learning_outcomes": [
+    "Choose appropriate visualizations",
+    "Understand correlation vs causation",
+    "Handle outliers properly",
+    "Select statistical tests",
+    "Recognize ML challenges"
+  ]
+}

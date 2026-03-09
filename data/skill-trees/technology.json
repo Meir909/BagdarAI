@@ -1,0 +1,131 @@
+{
+  "id": "technology-path",
+  "name": "Technology Path",
+  "description": "Master programming, data science, and AI technologies",
+  "category": "technology",
+  "icon": "💻",
+  "color": "#3B82F6",
+  "skills": [
+    {
+      "skill_id": "programming-basics",
+      "name": "Programming Basics",
+      "description": "Learn fundamental programming concepts and logic",
+      "xp_required": 0,
+      "level": 1,
+      "icon": "📚",
+      "parent_id": null,
+      "unlocks": ["python", "javascript", "algorithms"],
+      "category": "programming"
+    },
+    {
+      "skill_id": "python",
+      "name": "Python Programming",
+      "description": "Master Python syntax and popular libraries",
+      "xp_required": 50,
+      "level": 2,
+      "icon": "🐍",
+      "parent_id": "programming-basics",
+      "unlocks": ["data-analysis", "machine-learning"],
+      "category": "programming"
+    },
+    {
+      "skill_id": "javascript",
+      "name": "JavaScript & Web",
+      "description": "Build interactive web applications with JavaScript",
+      "xp_required": 50,
+      "level": 2,
+      "icon": "🌐",
+      "parent_id": "programming-basics",
+      "unlocks": ["frontend-development", "backend-development"],
+      "category": "programming"
+    },
+    {
+      "skill_id": "algorithms",
+      "name": "Algorithms & Data Structures",
+      "description": "Understand core algorithms and data structures",
+      "xp_required": 100,
+      "level": 3,
+      "icon": "🧮",
+      "parent_id": "programming-basics",
+      "unlocks": ["problem-solving", "optimization"],
+      "category": "programming"
+    },
+    {
+      "skill_id": "data-analysis",
+      "name": "Data Analysis",
+      "description": "Analyze and visualize data using Python tools",
+      "xp_required": 150,
+      "level": 3,
+      "icon": "📊",
+      "parent_id": "python",
+      "unlocks": ["machine-learning", "data-visualization"],
+      "category": "data"
+    },
+    {
+      "skill_id": "machine-learning",
+      "name": "Machine Learning",
+      "description": "Build and train machine learning models",
+      "xp_required": 300,
+      "level": 4,
+      "icon": "🤖",
+      "parent_id": "data-analysis",
+      "unlocks": ["deep-learning", "ai-systems"],
+      "category": "ai"
+    },
+    {
+      "skill_id": "frontend-development",
+      "name": "Frontend Development",
+      "description": "Create modern user interfaces with React",
+      "xp_required": 200,
+      "level": 3,
+      "icon": "🎨",
+      "parent_id": "javascript",
+      "unlocks": ["ui-design", "web-performance"],
+      "category": "web"
+    },
+    {
+      "skill_id": "backend-development",
+      "name": "Backend Development",
+      "description": "Build server-side applications and APIs",
+      "xp_required": 200,
+      "level": 3,
+      "icon": "⚙️",
+      "parent_id": "javascript",
+      "unlocks": ["database-design", "system-architecture"],
+      "category": "web"
+    },
+    {
+      "skill_id": "deep-learning",
+      "name": "Deep Learning",
+      "description": "Work with neural networks and deep learning frameworks",
+      "xp_required": 500,
+      "level": 5,
+      "icon": "🧠",
+      "parent_id": "machine-learning",
+      "unlocks": ["computer-vision", "nlp"],
+      "category": "ai"
+    },
+    {
+      "skill_id": "ai-systems",
+      "name": "AI Systems",
+      "description": "Design and deploy production AI systems",
+      "xp_required": 600,
+      "level": 6,
+      "icon": "🚀",
+      "parent_id": "machine-learning",
+      "unlocks": ["mlops", "ai-ethics"],
+      "category": "ai"
+    }
+  ],
+  "connections": [
+    {"from": "programming-basics", "to": "python"},
+    {"from": "programming-basics", "to": "javascript"},
+    {"from": "programming-basics", "to": "algorithms"},
+    {"from": "python", "to": "data-analysis"},
+    {"from": "data-analysis", "to": "machine-learning"},
+    {"from": "machine-learning", "to": "deep-learning"},
+    {"from": "machine-learning", "to": "ai-systems"},
+    {"from": "javascript", "to": "frontend-development"},
+    {"from": "javascript", "to": "backend-development"}
+  ]
+}

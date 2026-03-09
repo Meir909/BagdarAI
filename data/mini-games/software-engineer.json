@@ -1,0 +1,89 @@
+{
+  "id": "software-engineer-game",
+  "career": "Software Engineer",
+  "title": "Debug the Code",
+  "description": "Find and fix bugs in a real-world codebase",
+  "difficulty": "medium",
+  "duration": 300,
+  "xp_reward": 30,
+  "category": "technology",
+  "icon": "🐛",
+  "tasks": [
+    {
+      "task_id": "bug-1",
+      "task": "There's a syntax error in this JavaScript function. Can you spot it?",
+      "code_snippet": "function calculateTotal(items) {\n  let total = 0;\n  for (let item of items) {\n    total += item.price;\n  }\n  return total\n}",
+      "choices": [
+        "Missing semicolon after return statement",
+        "Wrong loop type",
+        "Incorrect variable name",
+        "No error - code is perfect"
+      ],
+      "correct_answer": 0,
+      "explanation": "JavaScript requires semicolons, though they can sometimes be omitted. In this case, adding a semicolon makes the code more reliable.",
+      "xp_reward": 10
+    },
+    {
+      "task_id": "bug-2", 
+      "task": "This function should return even numbers only. What's wrong?",
+      "code_snippet": "function getEvenNumbers(numbers) {\n  return numbers.filter(num => num % 2 === 1);\n}",
+      "choices": [
+        "Using wrong filter condition",
+        "Wrong arrow function syntax",
+        "Should use map instead of filter",
+        "No error - function works correctly"
+      ],
+      "correct_answer": 0,
+      "explanation": "The condition `num % 2 === 1` selects odd numbers. For even numbers, it should be `num % 2 === 0`.",
+      "xp_reward": 10
+    },
+    {
+      "task_id": "bug-3",
+      "task": "This API call is failing. What's the issue?",
+      "code_snippet": "async function fetchUserData(userId) {\n  const response = await fetch(`/api/users/${userId}`);\n  const data = response.json();\n  return data;\n}",
+      "choices": [
+        "Missing await before response.json()",
+        "Wrong endpoint URL",
+        "Should use POST instead of GET",
+        "Missing error handling"
+      ],
+      "correct_answer": 0,
+      "explanation": "The `response.json()` method returns a Promise, so it needs `await` to properly resolve the JSON data.",
+      "xp_reward": 10
+    },
+    {
+      "task_id": "algorithm-choice",
+      "task": "You need to search through 10,000 sorted user records. Which algorithm is most efficient?",
+      "scenario": "A user database is sorted by username and you need to find a specific user quickly.",
+      "choices": [
+        "Linear Search - O(n)",
+        "Binary Search - O(log n)",
+        "Bubble Sort - O(n²)",
+        "Random Search - O(∞)"
+      ],
+      "correct_answer": 1,
+      "explanation": "Binary search is perfect for sorted data, finding elements in O(log n) time, which is much faster than linear search for large datasets.",
+      "xp_reward": 15
+    },
+    {
+      "task_id": "security-check",
+      "task": "This login function has a security vulnerability. What is it?",
+      "code_snippet": "function login(username, password) {\n  const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;\n  return db.query(query);\n}",
+      "choices": [
+        "SQL Injection vulnerability",
+        "Password stored in plain text",
+        "No input validation",
+        "All of the above"
+      ],
+      "correct_answer": 3,
+      "explanation": "This code has multiple security issues: SQL injection from template literals, no password hashing, and no input validation. Always use parameterized queries and proper authentication.",
+      "xp_reward": 15
+    }
+  ],
+  "learning_outcomes": [
+    "Debug common JavaScript errors",
+    "Understand algorithm efficiency",
+    "Recognize security vulnerabilities",
+    "Write cleaner, safer code"
+  ]
+}
