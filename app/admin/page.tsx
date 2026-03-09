@@ -80,7 +80,8 @@ function AdminDashboard() {
     });
     const data = await res.json();
     if (res.ok) {
-      setSchools((prev) => [data.school, ...prev]);
+      const refreshed = await fetch("/api/admin/schools").then((r) => r.json());
+      setSchools(refreshed.schools || []);
       setSuccessMsg({ en: "School created successfully!", ru: "Школа успешно создана!", kk: "Мектеп сәтті жасалды!" }[language]);
       setSchoolForm({ name: "", city: "", directorPhone: "" });
       setShowAddSchool(false);
