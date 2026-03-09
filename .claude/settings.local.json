@@ -13,11 +13,15 @@
       "Bash(npx tsc:*)",
       "Bash(where:*)",
       "Bash(sc query:*)",
-      "Bash(timeout 15 npm run dev:*)"
+      "Bash(timeout 15 npm run dev:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(test:*)",
+      "Bash(npx prisma migrate diff:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\nurmi\\Downloads\\bagdarai-your-future-path-main\\bagdarai-your-future-path-main\\src\\components\\ui",
-      "c:\\Users\\nurmi\\.claude\\projects\\c--Users-nurmi-OneDrive-Desktop-----------infomatrix-BagdarAL\\memory"
+      "c:\\Users\\nurmi\\.claude\\projects\\c--Users-nurmi-OneDrive-Desktop-----------infomatrix-BagdarAL\\memory",
+      "c:\\Users\\nurmi\\OneDrive\\Desktop\\портфолио\\infomatrix\\BagdarAL\\app\\simulations"
     ]
   }
 }
