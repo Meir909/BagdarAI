@@ -3,8 +3,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Search, GraduationCap, TrendingUp } from "lucide-react";
+import { Search, GraduationCap, TrendingUp, X, DollarSign, BookOpen } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const categories = ["All", "IT", "Business", "Creative", "Science", "Medicine", "Engineering", "Education"];
 
@@ -31,6 +37,7 @@ export default function ProfessionsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [selected, setSelected] = useState<Profession | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams({ page: String(page), limit: "24" });
@@ -63,6 +70,9 @@ export default function ProfessionsPage() {
   const categoryIcons: Record<string, string> = {
     IT: "💻", Business: "💼", Creative: "🎨", Science: "🔬", Medicine: "⚕️", Engineering: "⚙️", Education: "📚",
   };
+
+  const demandColor = (d: number) =>
+    d >= 80 ? "text-green-500" : d >= 60 ? "text-primary" : "text-orange-500";
 
   return (
     <PageTransition>
@@ -118,7 +128,8 @@ export default function ProfessionsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
                   whileHover={{ y: -3 }}
-                  className="bg-card border border-border rounded-2xl p-5 shadow-card hover:shadow-card-hover transition-all"
+                  onClick={() => setSelected(prof)}
+                  className="bg-card border border-border rounded-2xl p-5 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <span className="text-2xl">{categoryIcons[prof.category] || "🏢"}</span>
@@ -129,7 +140,7 @@ export default function ProfessionsPage() {
 
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
                     <TrendingUp className="h-3 w-3 text-primary" />
-                    <span className="text-primary font-medium">{prof.futureDemand}%</span>
+                    <span className={`font-medium ${demandColor(prof.futureDemand)}`}>{prof.futureDemand}%</span>
                     <span>{{ en: "demand", ru: "спрос", kk: "сұраныс" }[language]}</span>
                   </div>
 
@@ -172,6 +183,87 @@ export default function ProfessionsPage() {
           )}
         </div>
       </div>
+
+      {/* Profession Detail Modal */}
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          {selected && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="text-3xl">{categoryIcons[selected.category] || "🏢"}</span>
+                  <div>
+                    <DialogTitle className="font-heading text-xl">{getName(selected)}</DialogTitle>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{selected.category}</span>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <p className="text-sm text-muted-foreground leading-relaxed">{getDesc(selected)}</p>
+
+              {/* Salary + Demand */}
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <div className="bg-muted/50 rounded-xl p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                    <DollarSign className="h-3 w-3" />
+                    {{ en: "Salary", ru: "Зарплата", kk: "Жалақы" }[language]}
+                  </div>
+                  <div className="font-semibold text-sm">{selected.salary}</div>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                    <TrendingUp className="h-3 w-3" />
+                    {{ en: "Future demand", ru: "Будущий спрос", kk: "Болашақ сұраныс" }[language]}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full"
+                        style={{ width: `${selected.futureDemand}%` }}
+                      />
+                    </div>
+                    <span className={`font-semibold text-sm ${demandColor(selected.futureDemand)}`}>
+                      {selected.futureDemand}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Skills */}
+              {selected.skills && selected.skills.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold mb-2">{{ en: "Required Skills", ru: "Необходимые навыки", kk: "Қажетті дағдылар" }[language]}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selected.skills.map((skill, i) => (
+                      <span key={i} className="text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Universities */}
+              {selected.universities && selected.universities.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-primary" />
+                    {{ en: "Top Universities", ru: "Топ университеты", kk: "Үздік университеттер" }[language]}
+                  </h3>
+                  <div className="space-y-2">
+                    {selected.universities.map((u, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm bg-muted/50 rounded-lg px-3 py-2">
+                        <span className="font-medium">{u.name}</span>
+                        <span className="text-xs text-muted-foreground">{u.country}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </PageTransition>
   );
 }
