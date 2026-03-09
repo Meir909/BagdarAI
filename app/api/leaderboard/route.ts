@@ -24,46 +24,58 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const topUsers = await prisma.userXP.findMany({
+    // Temporary fix: Use User table directly without XP system
+    const topUsers = await prisma.user.findMany({
       where: {
-        user: { role: "student", ...whereClause },
+        role: "student",
+        ...whereClause,
       },
-      include: {
-        user: {
-          select: { id: true, name: true, studentClass: true, schoolId: true, school: { select: { name: true } } },
-        },
+      select: {
+        id: true,
+        name: true,
+        studentClass: true,
+        schoolId: true,
+        school: { select: { name: true } },
+        createdAt: true,
       },
-      orderBy: { xp: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 50,
     });
 
-    const board = topUsers.map((entry, index) => ({
+    const board = topUsers.map((user, index) => ({
       rank: index + 1,
-      userId: entry.userId,
-      name: entry.user.name,
-      class: entry.user.studentClass,
-      schoolName: entry.user.school?.name ?? null,
-      xp: entry.xp,
-      level: entry.level,
-      isCurrentUser: entry.userId === session.userId,
+      userId: user.id,
+      name: user.name,
+      class: user.studentClass,
+      schoolName: user.school?.name ?? null,
+      xp: 0, // Default XP
+      level: 1, // Default level
+      isCurrentUser: user.id === session.userId,
     }));
 
     // Find current user rank if not in top 50
     let currentUserEntry = board.find((e) => e.isCurrentUser) ?? null;
     if (!currentUserEntry) {
-      const myXP = await prisma.userXP.findUnique({ where: { userId: session.userId } });
-      if (myXP) {
-        const countAbove = await prisma.userXP.count({
-          where: { xp: { gt: myXP.xp }, user: { role: "student", ...whereClause } },
+      const myUser = await prisma.user.findUnique({ 
+        where: { id: session.userId },
+        select: { id: true, name: true, studentClass: true, schoolId: true }
+      });
+      if (myUser) {
+        const countAbove = await prisma.user.count({
+          where: { 
+            role: "student", 
+            ...whereClause,
+            createdAt: { lt: myUser.createdAt }
+          },
         });
         currentUserEntry = {
           rank: countAbove + 1,
-          userId: session.userId,
-          name: "",
-          class: null,
+          userId: myUser.id,
+          name: myUser.name,
+          class: myUser.studentClass,
           schoolName: null,
-          xp: myXP.xp,
-          level: myXP.level,
+          xp: 0,
+          level: 1,
           isCurrentUser: true,
         };
       }
