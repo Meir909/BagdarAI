@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
+    // Allow unauthenticated access - return all simulations
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const simulations = await prisma.careerSimulation.findMany({
       orderBy: [{ category: "asc" }, { difficulty: "asc" }],
@@ -13,7 +13,7 @@ export async function GET() {
 
     // If student, attach their completion status
     let completedIds: string[] = [];
-    if (session.role === "student") {
+    if (session && session.role === "student") {
       const results = await prisma.simulationResult.findMany({
         where: { userId: session.userId },
         select: { simulationId: true },

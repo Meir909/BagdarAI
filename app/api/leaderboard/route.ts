@@ -5,14 +5,14 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+    // Allow unauthenticated access - show global leaderboard
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "global"; // global | school | class
 
     let whereClause: { schoolId?: string; studentClass?: string } = {};
 
-    if (type === "school" || type === "class") {
+    // Only filter by school/class if user is authenticated
+    if ((type === "school" || type === "class") && session) {
       const currentUser = await prisma.user.findUnique({ where: { id: session.userId } });
       if (!currentUser?.schoolId) {
         return NextResponse.json({ error: "No school assigned" }, { status: 400 });
@@ -50,20 +50,20 @@ export async function GET(request: NextRequest) {
       schoolName: user.school?.name ?? null,
       xp: 0, // Default XP
       level: 1, // Default level
-      isCurrentUser: user.id === session.userId,
+      isCurrentUser: session ? user.id === session.userId : false,
     }));
 
-    // Find current user rank if not in top 50
-    let currentUserEntry = board.find((e) => e.isCurrentUser) ?? null;
-    if (!currentUserEntry) {
-      const myUser = await prisma.user.findUnique({ 
+    // Find current user rank if authenticated and not in top 50
+    let currentUserEntry = session ? board.find((e) => e.isCurrentUser) ?? null : null;
+    if (session && !currentUserEntry) {
+      const myUser = await prisma.user.findUnique({
         where: { id: session.userId },
         select: { id: true, name: true, studentClass: true, schoolId: true, createdAt: true }
       });
       if (myUser) {
         const countAbove = await prisma.user.count({
-          where: { 
-            role: "student", 
+          where: {
+            role: "student",
             ...whereClause,
             createdAt: { lt: myUser.createdAt }
           },

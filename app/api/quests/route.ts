@@ -12,8 +12,10 @@ function getTodayExpiry(): Date {
 export async function GET() {
   try {
     const session = await getSession();
+    // Allow unauthenticated access, but only return generic quests for guests
     if (!session || session.role !== "student") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      // Return empty list for guests - they see blurred preview on page
+      return NextResponse.json({ quests: [] });
     }
 
     const now = new Date();
