@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { role, email, password, phone, schoolCode, invitationCode } = body;
+    const { role, email, password, phone, schoolCode, invitationCode, remember } = body;
 
     let user;
 
@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
 
-    const token = signToken({ userId: user.id, role: user.role, email: user.email ?? undefined, name: user.name });
-    const cookieConfig = setAuthCookie(token);
+    const token = signToken({ userId: user.id, role: user.role, email: user.email ?? undefined, name: user.name }, !!remember);
+    const cookieConfig = setAuthCookie(token, !!remember);
 
     // Get school info
     let schoolName = "";

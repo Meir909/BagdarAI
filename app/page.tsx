@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Brain, MessageCircle, Map, BarChart3, Shield, Users, Sparkles,
-  BookOpen, Trophy, ChevronDown, ChevronUp, Zap, Target, Star, Play,
+  BookOpen, Trophy, ChevronDown, ChevronUp, Zap, Target,
   GraduationCap, TrendingUp, Award, Rocket, CheckCircle2, Globe2,
   Swords, FlaskConical, Palette, HeartPulse, Briefcase, Code2,
 } from "lucide-react";
@@ -88,44 +88,6 @@ const professionCategories = [
   { icon: Rocket,      color: "text-orange-500", bg: "bg-orange-500/10", label: { en: "Engineering", ru: "Инженерия",   kk: "Инженерия"   }, count: 33 },
 ];
 
-const testimonials = [
-  {
-    name: "Айгерим С.",
-    school: "НИШ Астана, 11 кл.",
-    avatar: "А",
-    color: "bg-violet-500",
-    rating: 5,
-    text: {
-      en: "BagdarAI showed me that UX Design suits me 94%. Now I know exactly where to apply. The career simulation was so realistic!",
-      ru: "BagdarAI показал, что UX-дизайн подходит мне на 94%. Теперь точно знаю, куда поступать. Симуляция карьеры была реалистичной!",
-      kk: "BagdarAI маған UX-дизайн 94% сәйкес екенін көрсетті. Енді қайда тапсыруды нақты білемін. Мансап симуляциясы өте нақты болды!",
-    },
-  },
-  {
-    name: "Данияр Н.",
-    school: "Лицей №1 Алматы, 10 кл.",
-    avatar: "Д",
-    color: "bg-sky-500",
-    rating: 5,
-    text: {
-      en: "I talked with the AI Mentor Arman for a week. He explained machine learning better than my teacher. Earned 500 XP already!",
-      ru: "Общался с AI-ментором Арманом неделю. Он объяснил ML лучше учителя. Уже набрал 500 XP!",
-      kk: "Бір апта бойы AI-ментор Арманмен сөйлестім. Ол ML-ды мұғалімнен де жақсы түсіндірді. 500 XP жинадым!",
-    },
-  },
-  {
-    name: "Зарина М.",
-    school: "Гимназия №5 Қарағанды, 11 кл.",
-    avatar: "З",
-    color: "bg-emerald-500",
-    rating: 5,
-    text: {
-      en: "The daily quests make me open the app every day. I'm now #3 in the school leaderboard. My parents got a detailed PDF report too.",
-      ru: "Ежедневные квесты заставляют открывать приложение каждый день. Я на 3-м месте в рейтинге школы. Родители тоже получили PDF-отчёт.",
-      kk: "Күнделікті тапсырмалар мені күн сайын ашуға мәжбүр етеді. Мектеп рейтингінде 3-орындамын. Ата-анам да PDF есеп алды.",
-    },
-  },
-];
 
 const universities = [
   { short: "NU",   full: "Nazarbayev University", city: "Astana",   flag: "🇰🇿" },
@@ -494,47 +456,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── TESTIMONIALS ── */}
-        <section className="py-24">
-          <div className="container mx-auto px-4">
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold mb-4">
-                <Star className="h-3.5 w-3.5" />
-                {{ en: "Student Stories", ru: "Истории учеников", kk: "Оқушы оқиғалары" }[language]}
-              </div>
-              <h2 className="text-3xl md:text-4xl font-heading font-bold">
-                {{ en: "What Students Say", ru: "Что говорят ученики", kk: "Оқушылар не айтады" }[language]}
-              </h2>
-            </motion.div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {testimonials.map((t, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                  className="bg-card border border-border rounded-2xl p-6 shadow-card"
-                >
-                  <div className="flex gap-1 mb-4">
-                    {Array.from({ length: t.rating }).map((_, s) => (
-                      <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-6">"{t.text[language]}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full ${t.color} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-sm">{t.name}</div>
-                      <div className="text-xs text-muted-foreground">{t.school}</div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── FOR SCHOOLS ── */}
         <section className="py-24 bg-muted/30 border-y border-border">
           <div className="container mx-auto px-4">
@@ -685,8 +606,8 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
                   {{ en: "AI career guidance for Kazakhstan students ages 14–18.", ru: "AI профориентация для учеников Казахстана 14–18 лет.", kk: "Қазақстандағы 14–18 жастағы оқушыларға AI мансап бағдарлау." }[language]}
                 </p>
-                <p className="text-xs text-muted-foreground">info@bagdarai.kz</p>
-                <p className="text-xs text-muted-foreground">Astana, Kazakhstan 🇰🇿</p>
+                <p className="text-xs text-muted-foreground">nurmiko22@gmail.com</p>
+                <p className="text-xs text-muted-foreground">Aktau, Kazakhstan 🇰🇿</p>
               </div>
 
               <div>
@@ -721,9 +642,9 @@ export default function Home() {
               <div>
                 <h4 className="font-semibold text-sm mb-4">{{ en: "Contact", ru: "Контакты", kk: "Байланыс" }[language]}</h4>
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">info@bagdarai.kz</p>
-                  <p className="text-xs text-muted-foreground">+7 (700) 000-00-00</p>
-                  <p className="text-xs text-muted-foreground">Astana, Kazakhstan</p>
+                  <p className="text-xs text-muted-foreground">nurmiko22@gmail.com</p>
+                  <p className="text-xs text-muted-foreground">+7 771 692 72 16</p>
+                  <p className="text-xs text-muted-foreground">Aktau, Kazakhstan</p>
                 </div>
               </div>
             </div>
