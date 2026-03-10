@@ -3,10 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Send, Bot, User, ArrowLeft, Zap } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Send, User, ArrowLeft, Zap, Lock, Crown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import PageTransition from "@/components/PageTransition";
-import ProtectedRoute from "@/components/ProtectedRoute";
+
+const FREE_MSG_LIMIT = 10;
 
 interface NPC {
   id: string;
@@ -29,18 +32,16 @@ interface Message {
 }
 
 export default function MentorsPage() {
-  return (
-    <ProtectedRoute allowedRoles={["student"]}>
-      <MentorsHub />
-    </ProtectedRoute>
-  );
-}
-
-function MentorsHub() {
   const { language } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
   const [npcs, setNpcs] = useState<NPC[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeNpc, setActiveNpc] = useState<NPC | null>(null);
+
+  const isPro = isAuthenticated && (user?.subscriptionPlan === "PRO" || user?.subscriptionPlan === "SCHOOL");
+  const totalMessages = npcs.reduce((sum, n) => sum + n.messageCount, 0);
+  const freeMessagesLeft = Math.max(0, FREE_MSG_LIMIT - totalMessages);
+  const isFreeExhausted = !isPro && isAuthenticated && freeMessagesLeft === 0;
 
   useEffect(() => {
     fetch("/api/npc/chat")
@@ -52,8 +53,27 @@ function MentorsHub() {
   const getProfession = (npc: NPC) =>
     language === "ru" ? npc.professionRu : language === "kk" ? npc.professionKk : npc.profession;
 
+  const handleNpcClick = (npc: NPC) => {
+    if (!isAuthenticated) return; // guest: no-op (banner handles it)
+    if (isFreeExhausted) return;  // free exhausted: no-op
+    setActiveNpc(npc);
+  };
+
   if (activeNpc) {
-    return <NpcChat npc={activeNpc} language={language} onBack={() => setActiveNpc(null)} />;
+    return (
+      <NpcChat
+        npc={activeNpc}
+        language={language}
+        onBack={(updatedCount) => {
+          if (updatedCount !== undefined) {
+            setNpcs((prev) => prev.map((n) => n.id === activeNpc.id ? { ...n, messageCount: n.messageCount + updatedCount } : n));
+          }
+          setActiveNpc(null);
+        }}
+        isPro={isPro}
+        freeMessagesLeft={freeMessagesLeft}
+      />
+    );
   }
 
   return (
@@ -72,45 +92,91 @@ function MentorsHub() {
             </p>
           </motion.div>
 
+          {/* Guest banner */}
+          {!isAuthenticated && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mb-6 text-sm"
+            >
+              <Lock className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-muted-foreground flex-1">
+                {{ en: "Sign in to chat with AI mentors and earn XP.", ru: "Войдите, чтобы общаться с AI-менторами и зарабатывать XP.", kk: "AI-менторлармен сөйлесіп XP жинау үшін кіріңіз." }[language]}
+              </span>
+              <Button asChild size="sm" className="rounded-full shrink-0">
+                <Link href="/auth">{{ en: "Sign In", ru: "Войти", kk: "Кіру" }[language]}</Link>
+              </Button>
+            </motion.div>
+          )}
+
+          {/* FREE plan banner */}
+          {isAuthenticated && !isPro && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className={`flex items-center gap-3 border rounded-xl px-4 py-3 mb-6 text-sm ${
+                isFreeExhausted
+                  ? "bg-red-500/10 border-red-500/20"
+                  : "bg-amber-500/10 border-amber-500/20"
+              }`}
+            >
+              <Crown className={`h-4 w-4 shrink-0 ${isFreeExhausted ? "text-red-500" : "text-amber-500"}`} />
+              <span className="text-muted-foreground flex-1">
+                {isFreeExhausted
+                  ? ({ en: "You've used all 10 free messages. Upgrade to PRO for unlimited chats.", ru: "Вы использовали все 10 бесплатных сообщений. Перейди на PRO для безлимита.", kk: "10 тегін хабарды пайдаландыңыз. Шексіз чат үшін PRO-ға өтіңіз." } as Record<string, string>)[language]
+                  : ({ en: `Free plan: ${freeMessagesLeft} of ${FREE_MSG_LIMIT} messages left. Upgrade for unlimited.`, ru: `Бесплатный план: осталось ${freeMessagesLeft} из ${FREE_MSG_LIMIT} сообщений. Перейди на PRO.`, kk: `Тегін жоспар: ${FREE_MSG_LIMIT}-нан ${freeMessagesLeft} хабар қалды. PRO алыңыз.` } as Record<string, string>)[language]
+                }
+              </span>
+              <Button asChild size="sm" className={`rounded-full shrink-0 text-white border-0 ${isFreeExhausted ? "bg-red-500 hover:bg-red-600" : "bg-amber-500 hover:bg-amber-600"}`}>
+                <Link href="/pricing">{{ en: "Upgrade", ru: "Улучшить", kk: "Жаңарту" }[language]}</Link>
+              </Button>
+            </motion.div>
+          )}
+
           {loading ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {npcs.map((npc, i) => (
-                <motion.div
-                  key={npc.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  whileHover={{ y: -3 }}
-                  onClick={() => setActiveNpc(npc)}
-                  className="bg-card border border-border rounded-2xl p-5 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
-                      {npc.avatarEmoji}
+              {npcs.map((npc, i) => {
+                const clickable = isAuthenticated && !isFreeExhausted;
+                return (
+                  <motion.div
+                    key={npc.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                    whileHover={clickable ? { y: -3 } : {}}
+                    onClick={() => handleNpcClick(npc)}
+                    className={`bg-card border border-border rounded-2xl p-5 shadow-card transition-all ${
+                      clickable
+                        ? "hover:shadow-card-hover hover:border-primary/30 cursor-pointer"
+                        : "opacity-70 cursor-default"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
+                        {npc.avatarEmoji}
+                      </div>
+                      <div>
+                        <h3 className="font-heading font-semibold">{npc.name}</h3>
+                        <p className="text-xs text-muted-foreground">{getProfession(npc)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-heading font-semibold">{npc.name}</h3>
-                      <p className="text-xs text-muted-foreground">{getProfession(npc)}</p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{npc.category}</span>
+                      {npc.messageCount > 0 ? (
+                        <span className="text-primary font-medium">
+                          {npc.messageCount} {{ en: "messages", ru: "сообщений", kk: "хабар" }[language]}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          {{ en: "New", ru: "Новый", kk: "Жаңа" }[language]}
+                        </span>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{npc.category}</span>
-                    {npc.messageCount > 0 ? (
-                      <span className="text-primary font-medium">
-                        {npc.messageCount} {{ en: "messages", ru: "сообщений", kk: "хабар" }[language]}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        {{ en: "New", ru: "Новый", kk: "Жаңа" }[language]}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
 
               {npcs.length === 0 && (
                 <div className="col-span-3 text-center py-12 text-muted-foreground">
@@ -125,18 +191,33 @@ function MentorsHub() {
   );
 }
 
-function NpcChat({ npc, language, onBack }: { npc: NPC; language: "en" | "ru" | "kk"; onBack: () => void }) {
+function NpcChat({
+  npc,
+  language,
+  onBack,
+  isPro,
+  freeMessagesLeft,
+}: {
+  npc: NPC;
+  language: "en" | "ru" | "kk";
+  onBack: (updatedCount?: number) => void;
+  isPro: boolean;
+  freeMessagesLeft: number;
+}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [totalXpEarned, setTotalXpEarned] = useState(0);
+  const [msgsThisSession, setMsgsThisSession] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
+
+  const remaining = isPro ? Infinity : Math.max(0, freeMessagesLeft - msgsThisSession);
+  const isExhausted = !isPro && remaining === 0;
 
   const introMsg = language === "ru" ? npc.introMessageRu : language === "kk" ? npc.introMessageKk : npc.introMessage;
   const profession = language === "ru" ? npc.professionRu : language === "kk" ? npc.professionKk : npc.profession;
 
   useEffect(() => {
-    // Load history
     fetch(`/api/npc/chat?npcSlug=${npc.slug}`)
       .then((r) => r.json())
       .then((d) => {
@@ -156,7 +237,7 @@ function NpcChat({ npc, language, onBack }: { npc: NPC; language: "en" | "ru" | 
   }, [messages, isTyping]);
 
   const sendMessage = async () => {
-    if (!input.trim() || isTyping) return;
+    if (!input.trim() || isTyping || isExhausted) return;
     const userMsg = input.trim();
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
@@ -172,6 +253,7 @@ function NpcChat({ npc, language, onBack }: { npc: NPC; language: "en" | "ru" | 
       if (res.ok) {
         setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
         if (data.xpEarned) setTotalXpEarned((t) => t + data.xpEarned);
+        setMsgsThisSession((c) => c + 1);
       } else {
         setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I couldn't respond. Please try again." }]);
       }
@@ -187,7 +269,7 @@ function NpcChat({ npc, language, onBack }: { npc: NPC; language: "en" | "ru" | 
       <div className="container max-w-2xl mx-auto px-4 py-4 flex-1 flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={() => onBack(msgsThisSession)} className="text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xl">
@@ -197,12 +279,24 @@ function NpcChat({ npc, language, onBack }: { npc: NPC; language: "en" | "ru" | 
             <h2 className="font-heading font-semibold">{npc.name}</h2>
             <p className="text-xs text-muted-foreground">{profession}</p>
           </div>
-          {totalXpEarned > 0 && (
-            <div className="flex items-center gap-1 text-primary text-xs font-semibold bg-primary/10 px-2.5 py-1 rounded-full">
-              <Zap className="h-3 w-3" />
-              <span>+{totalXpEarned} XP</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {!isPro && (
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                isExhausted ? "bg-red-500/10 text-red-600" : "bg-amber-500/10 text-amber-600"
+              }`}>
+                {isExhausted
+                  ? ({ en: "Limit reached", ru: "Лимит", kk: "Лимит" } as Record<string, string>)[language]
+                  : `${remaining} {{ en: "left", ru: "осталось", kk: "қалды" }[language]}`
+                }
+              </span>
+            )}
+            {totalXpEarned > 0 && (
+              <div className="flex items-center gap-1 text-primary text-xs font-semibold bg-primary/10 px-2.5 py-1 rounded-full">
+                <Zap className="h-3 w-3" />
+                <span>+{totalXpEarned} XP</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Messages */}
@@ -253,6 +347,25 @@ function NpcChat({ npc, language, onBack }: { npc: NPC; language: "en" | "ru" | 
           <div ref={endRef} />
         </div>
 
+        {/* Exhausted upgrade banner */}
+        {isExhausted && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 mb-3 text-sm"
+          >
+            <Crown className="h-4 w-4 text-amber-500 shrink-0" />
+            <span className="text-muted-foreground flex-1">
+              {{ en: "You've used all 10 free messages. Upgrade to PRO for unlimited AI mentors.", ru: "Вы использовали все 10 бесплатных сообщений. PRO — безлимитные AI-менторы.", kk: "10 тегін хабарды пайдаландыңыз. PRO — шексіз AI-менторлар." }[language]}
+            </span>
+            <Button asChild size="sm" className="rounded-full shrink-0 bg-amber-500 hover:bg-amber-600 text-white border-0">
+              <Link href="/pricing">
+                {{ en: "Upgrade", ru: "Улучшить", kk: "Жаңарту" }[language]}
+                <ArrowRight className="h-3 w-3 ml-1" />
+              </Link>
+            </Button>
+          </motion.div>
+        )}
+
         {/* Input */}
         <div className="flex gap-3">
           <input
@@ -260,13 +373,16 @@ function NpcChat({ npc, language, onBack }: { npc: NPC; language: "en" | "ru" | 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-            placeholder={{ en: `Ask ${npc.name} anything...`, ru: `Спроси ${npc.name} что угодно...`, kk: `${npc.name}-тан кез келген нәрсе сұра...` }[language]}
-            disabled={isTyping}
+            placeholder={isExhausted
+              ? ({ en: "Message limit reached. Upgrade to continue.", ru: "Лимит достигнут. Перейди на PRO.", kk: "Лимит таусылды. PRO-ға өтіңіз." } as Record<string, string>)[language]
+              : ({ en: `Ask ${npc.name} anything...`, ru: `Спроси ${npc.name} что угодно...`, kk: `${npc.name}-тан кез келген нәрсе сұра...` } as Record<string, string>)[language]
+            }
+            disabled={isTyping || isExhausted}
             className="flex-1 px-4 py-3 rounded-full border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
           />
           <Button
             onClick={sendMessage}
-            disabled={!input.trim() || isTyping}
+            disabled={!input.trim() || isTyping || isExhausted}
             size="icon"
             className="rounded-full w-12 h-12 shrink-0"
           >
