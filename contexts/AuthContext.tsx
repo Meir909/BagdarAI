@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
+import { saveSessionToStorage, getSessionFromStorage, clearSessionStorage } from "@/lib/auth-client";
 
 export type UserRole = "admin" | "director" | "curator" | "student" | "parent";
 
@@ -36,10 +37,56 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const refreshAbortController = useRef<AbortController | null>(null);
 
-  // Load user from session on mount
+  // Load user from session on mount (from localStorage first, then API)
   useEffect(() => {
-    refreshUser().finally(() => setIsLoading(false));
+    let isMounted = true;
+
+    (async () => {
+      try {
+        // 1. Check localStorage first
+        const session = getSessionFromStorage();
+        if (session?.user && isMounted) {
+          setUser(session.user);
+          setIsLoading(false);
+          return;
+        }
+
+        // 2. Verify with API (in case cookie is still valid but localStorage expired)
+        if (refreshAbortController.current) {
+          refreshAbortController.current.abort();
+        }
+        refreshAbortController.current = new AbortController();
+
+        const res = await fetch("/api/auth/me", {
+          signal: refreshAbortController.current.signal,
+        });
+
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          setUser(data.user);
+          saveSessionToStorage(data.user, true); // Remember by default
+        } else if (isMounted) {
+          setUser(null);
+        }
+      } catch {
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+      if (refreshAbortController.current) {
+        refreshAbortController.current.abort();
+      }
+    };
   }, []);
 
   const refreshUser = async () => {
@@ -48,11 +95,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
+        saveSessionToStorage(data.user, true);
       } else {
         setUser(null);
+        clearSessionStorage();
       }
     } catch {
       setUser(null);
+      clearSessionStorage();
     }
   };
 
@@ -68,6 +118,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (res.ok && result.success) {
         setUser(result.user);
+        // Save to localStorage with "remember me" from login form
+        const remember = (data as Record<string, string> & { remember?: string }).remember === "true";
+        saveSessionToStorage(result.user, remember);
         return { success: true };
       }
 
@@ -89,6 +142,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (res.ok && result.success) {
         setUser(result.user);
+        // Save to localStorage after registration (remember by default)
+        saveSessionToStorage(result.user, true);
         return { success: true };
       }
 
@@ -103,6 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await fetch("/api/auth/logout", { method: "POST" });
     } finally {
       setUser(null);
+      clearSessionStorage();
     }
   };
 

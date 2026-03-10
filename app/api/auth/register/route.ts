@@ -26,6 +26,24 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "invalid_school_code" }, { status: 400 });
         }
 
+        // Idempotency: Check if student with same email/phone already exists (prevent duplicates)
+        if (email) {
+          const existing = await prisma.user.findUnique({ where: { email } });
+          if (existing && existing.role === "student") {
+            // Return existing student (idempotent)
+            user = existing;
+            break;
+          }
+        }
+        if (phone) {
+          const existing = await prisma.user.findFirst({ where: { phone, role: "student" } });
+          if (existing) {
+            // Return existing student
+            user = existing;
+            break;
+          }
+        }
+
         // Find a curator for this class (optional - assign to first available curator in school)
         const curator = await prisma.user.findFirst({
           where: { schoolId: school.id, role: "curator" },
@@ -37,6 +55,8 @@ export async function POST(request: NextRequest) {
           data: {
             role: "student",
             name,
+            email: email || undefined,
+            phone: phone || undefined,
             schoolId: school.id,
             studentClass,
             studentCode: newStudentCode,
