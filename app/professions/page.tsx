@@ -43,7 +43,6 @@ export default function ProfessionsPage() {
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<Profession | null>(null);
   const [showAuthGate, setShowAuthGate] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams({ page: String(page), limit: "24" });
@@ -81,30 +80,17 @@ export default function ProfessionsPage() {
   const demandColor = (d: number) =>
     d >= 80 ? "text-green-500" : d >= 60 ? "text-primary" : "text-orange-500";
 
-  const handleCardClick = (prof: Profession) => {
-    if (!isAuthenticated) {
-      setSelected(prof); // store for context
-      setShowAuthGate(true);
-    } else {
-      setSelected(prof);
-    }
-  };
-
   // Check if user has premium subscription (PRO or SCHOOL plan)
   const hasPremiumAccess = user?.subscriptionPlan && (user.subscriptionPlan === "PRO" || user.subscriptionPlan === "SCHOOL");
 
-  const handleViewDetails = (prof: Profession) => {
+  const handleCardClick = (prof: Profession) => {
+    // Allow everyone to see cards, but gate full details
+    setSelected(prof);
+
     if (!isAuthenticated) {
-      setSelected(prof);
       setShowAuthGate(true);
-    } else if (!hasPremiumAccess) {
-      // FREE user trying to view premium details
-      setSelected(prof);
-      setShowUpgradeModal(true);
-    } else {
-      // Premium user
-      setSelected(prof);
     }
+    // For authenticated FREE users, show the modal with limited info instead of upgrade modal
   };
 
   return (
@@ -204,7 +190,7 @@ export default function ProfessionsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
                   whileHover={{ y: -3 }}
-                  onClick={() => handleViewDetails(prof)}
+                  onClick={() => handleCardClick(prof)}
                   className="bg-card border border-border rounded-2xl p-5 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all cursor-pointer relative group"
                 >
                   {/* Lock overlay for guests */}
@@ -330,10 +316,10 @@ export default function ProfessionsPage() {
         )}
       </AnimatePresence>
 
-      {/* Full Detail Modal (authenticated premium user) */}
-      <Dialog open={Boolean(selected) && !showAuthGate && !showUpgradeModal && isAuthenticated && Boolean(hasPremiumAccess)} onOpenChange={(open) => { if (!open) setSelected(null); }}>
+      {/* Full Detail Modal (authenticated user - limited for FREE) */}
+      <Dialog open={Boolean(selected) && !showAuthGate && isAuthenticated} onOpenChange={(open) => { if (!open) setSelected(null); }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          {selected && isAuthenticated && hasPremiumAccess && (
+          {selected && isAuthenticated && (
             <>
               <DialogHeader>
                 <div className="flex items-center gap-3 mb-1">
@@ -348,27 +334,41 @@ export default function ProfessionsPage() {
               <p className="text-sm text-muted-foreground leading-relaxed">{getDesc(selected)}</p>
 
               <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="bg-muted/50 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                    <DollarSign className="h-3 w-3" />
-                    {{ en: "Salary", ru: "Зарплата", kk: "Жалақы" }[language]}
-                  </div>
-                  <div className="font-semibold text-sm">{selected.salary}</div>
-                </div>
-                <div className="bg-muted/50 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                    <TrendingUp className="h-3 w-3" />
-                    {{ en: "Future demand", ru: "Будущий спрос", kk: "Болашақ сұраныс" }[language]}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full" style={{ width: `${selected.futureDemand}%` }} />
+                {hasPremiumAccess ? (
+                  <>
+                    <div className="bg-muted/50 rounded-xl p-3">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <DollarSign className="h-3 w-3" />
+                        {{ en: "Salary", ru: "Зарплата", kk: "Жалақы" }[language]}
+                      </div>
+                      <div className="font-semibold text-sm">{selected.salary}</div>
                     </div>
-                    <span className={`font-semibold text-sm ${demandColor(selected.futureDemand)}`}>
-                      {selected.futureDemand}%
-                    </span>
+                    <div className="bg-muted/50 rounded-xl p-3">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <TrendingUp className="h-3 w-3" />
+                        {{ en: "Future demand", ru: "Будущий спрос", kk: "Болашақ сұраныс" }[language]}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full" style={{ width: `${selected.futureDemand}%` }} />
+                        </div>
+                        <span className={`font-semibold text-sm ${demandColor(selected.futureDemand)}`}>
+                          {selected.futureDemand}%
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="col-span-2 bg-orange-500/5 border border-orange-500/20 rounded-xl p-3 text-center">
+                    <div className="flex items-center justify-center gap-2 text-xs text-orange-600 dark:text-orange-400 mb-2">
+                      <Lock className="h-3 w-3" />
+                      <span>{{ en: "Full details locked", ru: "Полные детали заблокированы", kk: "Толық мәліметтер құлыпталған" }[language]}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {{ en: "Upgrade to PRO to see salary and market demand.", ru: "Обновитесь на PRO для зарплаты и спроса.", kk: "Жалақы және сұранысты көру үшін PRO-ға жаңартыңыз." }[language]}
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
 
               {selected.skills && selected.skills.length > 0 && (
@@ -386,7 +386,7 @@ export default function ProfessionsPage() {
                 </div>
               )}
 
-              {selected.universities && selected.universities.length > 0 && (
+              {hasPremiumAccess && selected.universities && selected.universities.length > 0 && (
                 <div className="mt-4">
                   <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                     <GraduationCap className="h-4 w-4 text-primary" />
@@ -404,76 +404,28 @@ export default function ProfessionsPage() {
               )}
 
               <div className="mt-6 pt-4 border-t border-border flex gap-2">
-                <Button asChild size="sm" className="rounded-full flex-1" onClick={() => setSelected(null)}>
-                  <Link href={`/career-roadmap/${selected.id}`}>
-                    {{ en: "View Roadmap", ru: "Посмотреть карту", kk: "Картаны қарау" }[language]}
-                    <ArrowRight className="ml-2 h-3 w-3" />
-                  </Link>
-                </Button>
+                {hasPremiumAccess && (
+                  <Button asChild size="sm" className="rounded-full flex-1" onClick={() => setSelected(null)}>
+                    <Link href={`/career-roadmap/${selected.id}`}>
+                      {{ en: "View Roadmap", ru: "Посмотреть карту", kk: "Картаны қарау" }[language]}
+                      <ArrowRight className="ml-2 h-3 w-3" />
+                    </Link>
+                  </Button>
+                )}
+                {!hasPremiumAccess && (
+                  <Button asChild size="sm" className="rounded-full flex-1" onClick={() => setSelected(null)}>
+                    <Link href="/pricing">
+                      {{ en: "Upgrade to PRO", ru: "Обновиться на PRO", kk: "PRO-ға жаңарту" }[language]}
+                      <ArrowRight className="ml-2 h-3 w-3" />
+                    </Link>
+                  </Button>
+                )}
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Upgrade Modal for FREE users */}
-      <Dialog open={showUpgradeModal} onOpenChange={(open) => { if (!open) { setShowUpgradeModal(false); setSelected(null); } }}>
-        <DialogContent className="max-w-sm text-center">
-          <button
-            onClick={() => { setShowUpgradeModal(false); setSelected(null); }}
-            className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <div className="pt-2 pb-1">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 text-3xl">
-              {categoryIcons[selected?.category || ""] || "🏢"}
-            </div>
-            <DialogHeader>
-              <DialogTitle className="text-center text-lg">
-                {{ en: "Unlock Full Details", ru: "Разблокируйте полные детали", kk: "Толық ақпаратты ашыңыз" }[language]}
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground mt-2 mb-4">
-              {{ en: "Upgrade to PRO to see salary ranges, required skills, and university recommendations for all professions.", ru: "Обновитесь до PRO, чтобы просматривать зарплату, навыки и университеты для всех профессий.", kk: "Барлық мамандықтар үшін жалақы, дағдылар және университеттерді көру үшін PRO-ға жаңартыңыз." }[language]}
-            </p>
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6 text-left">
-              <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <span className="text-lg">⭐</span>
-                {{ en: "PRO includes:", ru: "PRO включает:", kk: "PRO қосымша:" }[language]}
-              </h4>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-primary" />
-                  {{ en: "Complete profession details", ru: "Полные описания профессий", kk: "Толық мамандық ақпараты" }[language]}
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-primary" />
-                  {{ en: "Salary ranges", ru: "Диапазоны зарплаты", kk: "Жалақы диапазондары" }[language]}
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-primary" />
-                  {{ en: "Required skills", ru: "Необходимые навыки", kk: "Қажетті дағдылар" }[language]}
-                </li>
-              </ul>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button asChild className="rounded-full w-full" onClick={() => { setShowUpgradeModal(false); setSelected(null); }}>
-                <Link href="/pricing">
-                  {{ en: "Upgrade to PRO", ru: "Обновиться на PRO", kk: "PRO-ға жаңарту" }[language]}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <button
-                onClick={() => { setShowUpgradeModal(false); setSelected(null); }}
-                className="text-xs text-muted-foreground hover:text-foreground mt-1 transition-colors"
-              >
-                {{ en: "Continue browsing free", ru: "Продолжить бесплатно", kk: "Тегінде шолуды жалғастыру" }[language]}
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </PageTransition>
   );
 }
