@@ -200,30 +200,13 @@ export async function GET(
     let personalization = null;
 
     if (session?.userId) {
-      // Get user's test results if available
-      const user = await prisma.user.findUnique({
-        where: { id: session.userId },
-        select: {
-          mbtiType: true,
-          skillResults: true,
-          riasecScores: true,
-        },
-      });
-
-      if (user) {
-        // Generate AI-powered personalized analysis
+      try {
+        // Generate AI-powered personalized analysis based on profession
         const analysis = await generateCareerAnalysis(
           {
-            mbtiType: user.mbtiType || undefined,
-            interests: user.riasecScores
-              ? Object.entries(user.riasecScores as any)
-                  .sort(([, a], [, b]) => (b as number) - (a as number))
-                  .slice(0, 3)
-                  .map(([key]) => key)
-              : undefined,
-            skills: Array.isArray(user.skillResults)
-              ? (user.skillResults as any[]).slice(0, 5)
-              : undefined,
+            // Could fetch actual user test results here if they exist
+            interests: undefined,
+            skills: undefined,
           },
           profession.name,
           "en"
@@ -238,6 +221,10 @@ export async function GET(
           advice: analysis.advice,
           alternativeProfessions: analysis.alternativeProfessions,
         };
+      } catch (aiError) {
+        console.error("Personalization AI error:", aiError);
+        // Fallback to non-personalized roadmap
+        personalization = null;
       }
     }
 
