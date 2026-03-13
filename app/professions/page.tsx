@@ -34,7 +34,7 @@ interface Profession {
 
 export default function ProfessionsPage() {
   const { language } = useLanguage();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [professions, setProfessions] = useState<Profession[]>([]);
@@ -43,6 +43,7 @@ export default function ProfessionsPage() {
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<Profession | null>(null);
   const [showAuthGate, setShowAuthGate] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams({ page: String(page), limit: "24" });
@@ -81,11 +82,28 @@ export default function ProfessionsPage() {
     d >= 80 ? "text-green-500" : d >= 60 ? "text-primary" : "text-orange-500";
 
   const handleCardClick = (prof: Profession) => {
-    if (isAuthenticated) {
-      setSelected(prof);
-    } else {
+    if (!isAuthenticated) {
       setSelected(prof); // store for context
       setShowAuthGate(true);
+    } else {
+      setSelected(prof);
+    }
+  };
+
+  // Check if user has premium subscription (PRO or SCHOOL plan)
+  const hasPremiumAccess = user?.subscriptionPlan && (user.subscriptionPlan === "PRO" || user.subscriptionPlan === "SCHOOL");
+
+  const handleViewDetails = (prof: Profession) => {
+    if (!isAuthenticated) {
+      setSelected(prof);
+      setShowAuthGate(true);
+    } else if (!hasPremiumAccess) {
+      // FREE user trying to view premium details
+      setSelected(prof);
+      setShowUpgradeModal(true);
+    } else {
+      // Premium user
+      setSelected(prof);
     }
   };
 
@@ -151,6 +169,22 @@ export default function ProfessionsPage() {
             </motion.div>
           )}
 
+          {/* FREE plan banner */}
+          {!authLoading && isAuthenticated && !hasPremiumAccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 bg-orange-500/5 border border-orange-500/20 rounded-xl px-4 py-3 mb-6 text-sm"
+            >
+              <Lock className="h-4 w-4 text-orange-600 dark:text-orange-400 shrink-0" />
+              <span className="text-muted-foreground flex-1">
+                {{ en: "Upgrade to PRO to see salary ranges, required skills, and top universities.", ru: "Обновитесь на PRO, чтобы увидеть зарплату, навыки и университеты.", kk: "Жалақы, дағдылар және университеттерді көру үшін PRO-ға жаңартыңыз." }[language]}
+              </span>
+              <Button asChild size="sm" className="rounded-full shrink-0">
+                <Link href="/pricing">{{ en: "Upgrade", ru: "Обновиться", kk: "Жаңарту" }[language]}</Link>
+              </Button>
+            </motion.div>
+          )}
+
           {/* Grid */}
           {loading ? (
             <div className="flex justify-center py-20">
@@ -170,7 +204,7 @@ export default function ProfessionsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
                   whileHover={{ y: -3 }}
-                  onClick={() => handleCardClick(prof)}
+                  onClick={() => handleViewDetails(prof)}
                   className="bg-card border border-border rounded-2xl p-5 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all cursor-pointer relative group"
                 >
                   {/* Lock overlay for guests */}
@@ -195,7 +229,12 @@ export default function ProfessionsPage() {
                     <span>{{ en: "demand", ru: "спрос", kk: "сұраныс" }[language]}</span>
                   </div>
 
-                  {isAuthenticated ? (
+                  {!isAuthenticated ? (
+                    <div className="flex items-center gap-1 text-xs text-primary/70 mt-1">
+                      <Lock className="h-3 w-3" />
+                      <span>{{ en: "Sign in for details", ru: "Войдите для деталей", kk: "Деталдар үшін кіріңіз" }[language]}</span>
+                    </div>
+                  ) : hasPremiumAccess ? (
                     <>
                       <div className="text-xs font-medium text-foreground mb-2">{prof.salary}</div>
                       {prof.universities && prof.universities.length > 0 && (
@@ -208,9 +247,9 @@ export default function ProfessionsPage() {
                       )}
                     </>
                   ) : (
-                    <div className="flex items-center gap-1 text-xs text-primary/70 mt-1">
+                    <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 mt-1">
                       <Lock className="h-3 w-3" />
-                      <span>{{ en: "Sign in for details", ru: "Войдите для деталей", kk: "Деталдар үшін кіріңіз" }[language]}</span>
+                      <span>{{ en: "Unlock with PRO", ru: "Разблокировка PRO", kk: "PRO арқылы ашыңыз" }[language]}</span>
                     </div>
                   )}
                 </motion.div>
@@ -291,10 +330,10 @@ export default function ProfessionsPage() {
         )}
       </AnimatePresence>
 
-      {/* Full Detail Modal (authenticated) */}
-      <Dialog open={!!selected && !showAuthGate && isAuthenticated} onOpenChange={(open) => { if (!open) setSelected(null); }}>
+      {/* Full Detail Modal (authenticated premium user) */}
+      <Dialog open={Boolean(selected) && !showAuthGate && !showUpgradeModal && isAuthenticated && Boolean(hasPremiumAccess)} onOpenChange={(open) => { if (!open) setSelected(null); }}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          {selected && isAuthenticated && (
+          {selected && isAuthenticated && hasPremiumAccess && (
             <>
               <DialogHeader>
                 <div className="flex items-center gap-3 mb-1">
@@ -363,8 +402,76 @@ export default function ProfessionsPage() {
                   </div>
                 </div>
               )}
+
+              <div className="mt-6 pt-4 border-t border-border flex gap-2">
+                <Button asChild size="sm" className="rounded-full flex-1" onClick={() => setSelected(null)}>
+                  <Link href={`/career-roadmap/${selected.id}`}>
+                    {{ en: "View Roadmap", ru: "Посмотреть карту", kk: "Картаны қарау" }[language]}
+                    <ArrowRight className="ml-2 h-3 w-3" />
+                  </Link>
+                </Button>
+              </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Upgrade Modal for FREE users */}
+      <Dialog open={showUpgradeModal} onOpenChange={(open) => { if (!open) { setShowUpgradeModal(false); setSelected(null); } }}>
+        <DialogContent className="max-w-sm text-center">
+          <button
+            onClick={() => { setShowUpgradeModal(false); setSelected(null); }}
+            className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="pt-2 pb-1">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4 text-3xl">
+              {categoryIcons[selected?.category || ""] || "🏢"}
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-center text-lg">
+                {{ en: "Unlock Full Details", ru: "Разблокируйте полные детали", kk: "Толық ақпаратты ашыңыз" }[language]}
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground mt-2 mb-4">
+              {{ en: "Upgrade to PRO to see salary ranges, required skills, and university recommendations for all professions.", ru: "Обновитесь до PRO, чтобы просматривать зарплату, навыки и университеты для всех профессий.", kk: "Барлық мамандықтар үшін жалақы, дағдылар және университеттерді көру үшін PRO-ға жаңартыңыз." }[language]}
+            </p>
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6 text-left">
+              <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <span className="text-lg">⭐</span>
+                {{ en: "PRO includes:", ru: "PRO включает:", kk: "PRO қосымша:" }[language]}
+              </h4>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-primary" />
+                  {{ en: "Complete profession details", ru: "Полные описания профессий", kk: "Толық мамандық ақпараты" }[language]}
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-primary" />
+                  {{ en: "Salary ranges", ru: "Диапазоны зарплаты", kk: "Жалақы диапазондары" }[language]}
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-primary" />
+                  {{ en: "Required skills", ru: "Необходимые навыки", kk: "Қажетті дағдылар" }[language]}
+                </li>
+              </ul>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button asChild className="rounded-full w-full" onClick={() => { setShowUpgradeModal(false); setSelected(null); }}>
+                <Link href="/pricing">
+                  {{ en: "Upgrade to PRO", ru: "Обновиться на PRO", kk: "PRO-ға жаңарту" }[language]}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <button
+                onClick={() => { setShowUpgradeModal(false); setSelected(null); }}
+                className="text-xs text-muted-foreground hover:text-foreground mt-1 transition-colors"
+              >
+                {{ en: "Continue browsing free", ru: "Продолжить бесплатно", kk: "Тегінде шолуды жалғастыру" }[language]}
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </PageTransition>

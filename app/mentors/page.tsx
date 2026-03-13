@@ -286,7 +286,7 @@ function NpcChat({
               }`}>
                 {isExhausted
                   ? ({ en: "Limit reached", ru: "Лимит", kk: "Лимит" } as Record<string, string>)[language]
-                  : `${remaining} {{ en: "left", ru: "осталось", kk: "қалды" }[language]}`
+                  : `${remaining} ${({ en: "left", ru: "осталось", kk: "қалды" } as Record<string, string>)[language]}`
                 }
               </span>
             )}

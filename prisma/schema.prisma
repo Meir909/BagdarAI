@@ -59,6 +59,7 @@ model User {
   simulationResults  SimulationResult[]
   userQuests         UserQuest[]
   npcMessages        NpcMessage[]
+  jobSimulationResults UserSimulationResult[]
 
   @@index([role])
   @@index([schoolId])
@@ -128,6 +129,9 @@ model Profession {
   futureDemand Int
   skills       Json
   universities Json   @default("[]")
+
+  roadmap      CareerRoadmap?
+  simulations  JobSimulation[]
 
   @@index([category])
 }
@@ -284,3 +288,69 @@ model NpcMessage {
 
   @@index([userId, npcId])
 }
+
+// ─── CAREER ROADMAP ──────────────────────────────────────────────────────────
+
+model CareerRoadmap {
+  id            String   @id @default(cuid())
+  professionId  String   @unique
+  profession    Profession @relation(fields: [professionId], references: [id], onDelete: Cascade)
+
+  // 6 stages: School, Exams, University, Skills, Experience, Career Growth
+  stages        Json     // Array of stages with subject/skills/timeline
+
+  requiredSkills String[]
+  universities   Json     // Array of {name, country, minScore, probability}
+  salaryInfo     Json     // {country: salary_range}
+  timeline       Int      // Years to reach profession from now
+
+  createdAt     DateTime  @default(now())
+
+  @@index([professionId])
+}
+
+// ─── JOB SIMULATIONS ─────────────────────────────────────────────────────────
+
+model JobSimulation {
+  id            String   @id @default(cuid())
+  professionId  String
+  profession    Profession @relation(fields: [professionId], references: [id], onDelete: Cascade)
+
+  title         String
+  titleRu       String
+  titleKk       String
+  description   String
+  descriptionRu String
+  descriptionKk String
+
+  missions      Json     // Array of {id, title, scenario, options, correctAnswers, xpReward}
+  difficulty    String   // easy | medium | hard
+  xpReward      Int      @default(100)
+
+  results       UserSimulationResult[]
+  createdAt     DateTime  @default(now())
+
+  @@index([professionId])
+}
+
+model UserSimulationResult {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  simulationId  String
+  simulation    JobSimulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+
+  missionResults Json    // Array of {missionId, userAnswer, feedback, xpEarned, isCorrect}
+  score         Int      // Total score
+  maxScore      Int      // Maximum possible score
+  feedback      String?  // AI final feedback
+  strengths     String[] // What user did well
+  improvements  String[] // Areas to improve
+
+  completedAt   DateTime @default(now())
+
+  @@unique([userId, simulationId])
+  @@index([userId])
+}
+

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateCareerAnalysis, RiasecQuizAnswer } from "@/services/openai";
+import { generateCareerAnalysis, generateTestFeedback } from "@/lib/openai";
 import { RiasecScores } from "@/data/riasec-questions";
+
+interface RiasecQuizAnswer {
+  question: string;
+  answer: string;
+}
 
 export async function POST(request: NextRequest) {
   try {

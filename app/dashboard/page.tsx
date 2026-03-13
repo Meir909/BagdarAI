@@ -71,7 +71,7 @@ function Dashboard() {
     }
 
     setLoading(false);
-  }, [user]);
+  }, []);
 
   const getCareerName = (career: { name: string; nameRu?: string; nameKk?: string }) => {
     if (language === "ru") return career.nameRu || career.name;
@@ -97,7 +97,7 @@ function Dashboard() {
   const skillsToDevelop = Array.isArray(result?.skillsToDevelop) ? result!.skillsToDevelop : [];
   const userBadges = Array.isArray(user?.badges) ? user!.badges as Array<{ name: string; nameRu?: string; nameKk?: string; icon: string }> : [];
 
-  const mbtiType = mbtiResult ? getMbtiType(mbtiResult.scores) : null;
+  const mbtiType = mbtiResult?.type ?? null;
   const mbtiDesc = mbtiType ? MBTI_DESCRIPTIONS[mbtiType] : null;
   const aptStrengths = aptitudeResult ? getAptitudeStrengths(aptitudeResult.scores) : [];
 

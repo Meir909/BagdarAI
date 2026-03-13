@@ -370,8 +370,11 @@ function AptitudeTestRunner({ language, onComplete }: { language: Language; onCo
 
   const handleFinish = () => {
     const scores = calculateAptitudeScores(answers);
+    const total = Object.values(scores).reduce((a, b) => a + b, 0);
+    const maxTotal = aptitudeQuestions.length;
+    const aptResult = { scores, total, maxTotal };
     if (typeof window !== "undefined") {
-      sessionStorage.setItem("aptitudeResult", JSON.stringify(scores));
+      sessionStorage.setItem("aptitudeResult", JSON.stringify(aptResult));
     }
     setResult(scores);
     onComplete();

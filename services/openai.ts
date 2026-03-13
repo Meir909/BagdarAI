@@ -4,7 +4,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODEL = "o4-mini";
+const MODEL = "gpt-4o-mini";
 
 export interface QuizAnswer {
   questionId: number;

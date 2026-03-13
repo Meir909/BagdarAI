@@ -16,7 +16,14 @@
       "Bash(timeout 15 npm run dev:*)",
       "Bash(npx prisma migrate dev:*)",
       "Bash(test:*)",
-      "Bash(npx prisma migrate diff:*)"
+      "Bash(npx prisma migrate diff:*)",
+      "Bash(git fetch:*)",
+      "Read(//c/Users/nurmi/OneDrive/Desktop/портфолио/infomatrix/BagdarAL/**)",
+      "Bash(\"c:/Users/nurmi/OneDrive/Desktop/портфолио/infomatrix/BagdarAL/lib/auth.ts\":*)",
+      "Bash(curl:*)",
+      "Bash(npx prisma migrate deploy:*)",
+      "Bash(wc -l:*)",
+      "Bash(npx prisma studio:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\nurmi\\Downloads\\bagdarai-your-future-path-main\\bagdarai-your-future-path-main\\src\\components\\ui",
