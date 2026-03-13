@@ -23,7 +23,8 @@
       "Bash(curl:*)",
       "Bash(npx prisma migrate deploy:*)",
       "Bash(wc -l:*)",
-      "Bash(npx prisma studio:*)"
+      "Bash(npx prisma studio:*)",
+      "Bash(find:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\nurmi\\Downloads\\bagdarai-your-future-path-main\\bagdarai-your-future-path-main\\src\\components\\ui",
