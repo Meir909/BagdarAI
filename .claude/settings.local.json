@@ -24,7 +24,9 @@
       "Bash(npx prisma migrate deploy:*)",
       "Bash(wc -l:*)",
       "Bash(npx prisma studio:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx prisma migrate create:*)",
+      "Bash(PGPASSWORD=\"NurdauletMeirbek\" psql:*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\nurmi\\Downloads\\bagdarai-your-future-path-main\\bagdarai-your-future-path-main\\src\\components\\ui",
