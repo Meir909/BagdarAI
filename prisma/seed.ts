@@ -232,30 +232,34 @@ async function main() {
 
   console.log(`✅ ${professionCount} professions seeded`);
 
-  // 9. Seed Career Simulations
+  // 9. Seed Career Simulations (skip if table doesn't exist)
   let simCount = 0;
-  for (const sim of simulations) {
-    const simId = `sim-${sim.careerId}`;
-    await prisma.careerSimulation.upsert({
-      where: { id: simId },
-      update: {
-        title: sim.title, titleRu: sim.titleRu, titleKk: sim.titleKk,
-        description: sim.description, descriptionRu: sim.descriptionRu, descriptionKk: sim.descriptionKk,
-        difficulty: sim.difficulty, estimatedTime: sim.estimatedTime,
-        xpReward: sim.xpReward, scenarios: sim.scenarios as object[], category: sim.category,
-      },
-      create: {
-        id: simId,
-        careerId: sim.careerId,
-        title: sim.title, titleRu: sim.titleRu, titleKk: sim.titleKk,
-        description: sim.description, descriptionRu: sim.descriptionRu, descriptionKk: sim.descriptionKk,
-        difficulty: sim.difficulty, estimatedTime: sim.estimatedTime,
-        xpReward: sim.xpReward, scenarios: sim.scenarios as object[], category: sim.category,
-      },
-    });
-    simCount++;
+  try {
+    for (const sim of simulations) {
+      const simId = `sim-${sim.careerId}`;
+      await prisma.careerSimulation.upsert({
+        where: { id: simId },
+        update: {
+          title: sim.title, titleRu: sim.titleRu, titleKk: sim.titleKk,
+          description: sim.description, descriptionRu: sim.descriptionRu, descriptionKk: sim.descriptionKk,
+          difficulty: sim.difficulty, estimatedTime: sim.estimatedTime,
+          xpReward: sim.xpReward, scenarios: sim.scenarios as object[], category: sim.category,
+        },
+        create: {
+          id: simId,
+          careerId: sim.careerId,
+          title: sim.title, titleRu: sim.titleRu, titleKk: sim.titleKk,
+          description: sim.description, descriptionRu: sim.descriptionRu, descriptionKk: sim.descriptionKk,
+          difficulty: sim.difficulty, estimatedTime: sim.estimatedTime,
+          xpReward: sim.xpReward, scenarios: sim.scenarios as object[], category: sim.category,
+        },
+      });
+      simCount++;
+    }
+    console.log(`✅ ${simCount} simulations seeded`);
+  } catch (error) {
+    console.log(`⚠️  Career Simulations skipped (table might not exist yet)`);
   }
-  console.log(`✅ ${simCount} simulations seeded`);
 
   // 10. Seed NPC Mentors
   let npcCount = 0;
