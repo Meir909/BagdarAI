@@ -1,5 +1,5 @@
 export interface DailyQuestData {
-  type: "simulation" | "profession" | "mentor" | "test" | "chat";
+  type: "simulation" | "profession" | "mentor" | "test" | "chat" | "job_simulation" | "leaderboard" | "daily_login" | "roadmap";
   title: string;
   titleRu: string;
   titleKk: string;
@@ -151,6 +151,91 @@ export const questTemplates: DailyQuestData[] = [
     descriptionKk: "AI-дан арман мансабыңа арналған университет нұсқалары туралы сұра.",
     xpReward: 20,
     icon: "🎓",
+  },
+
+  // JOB SIMULATION QUESTS
+  {
+    type: "job_simulation",
+    title: "Hard Mode Challenge",
+    titleRu: "Вызов сложного режима",
+    titleKk: "Ауыр режимінің сынағы",
+    description: "Complete a hard difficulty job simulation and score 70% or higher.",
+    descriptionRu: "Пройди симуляцию на сложном уровне и набери 70% и выше.",
+    descriptionKk: "Ауыр деңгейдегі симуляцияны өтіп, 70% және одан жоғары ұпай жина.",
+    xpReward: 50,
+    icon: "🔥",
+  },
+  {
+    type: "job_simulation",
+    title: "Multi-Mission Master",
+    titleRu: "Мастер мультимиссий",
+    titleKk: "Көпмиссия шебері",
+    description: "Complete a job simulation with 3+ missions in a single session.",
+    descriptionRu: "Пройди симуляцию с 3+ миссиями в одной сессии.",
+    descriptionKk: "Бір сеансында 3+ миссиясы бар симуляцияны өт.",
+    xpReward: 45,
+    icon: "🎯",
+  },
+
+  // LEADERBOARD QUESTS
+  {
+    type: "leaderboard",
+    title: "Rise Up",
+    titleRu: "Подним вверх",
+    titleKk: "Жоғарыға өтіңіз",
+    description: "Earn 500 XP today to climb the leaderboard.",
+    descriptionRu: "Заработай 500 XP сегодня и подойди выше в рейтинге.",
+    descriptionKk: "Бүгін 500 XP табыңыз және рейтингке ілінейіңіз.",
+    xpReward: 50,
+    icon: "📈",
+  },
+  {
+    type: "leaderboard",
+    title: "Weekly Grind",
+    titleRu: "Еженедельный труд",
+    titleKk: "Аптасына еңбек",
+    description: "Earn 1000 XP this week to reach the top 10 weekly leaderboard.",
+    descriptionRu: "Заработай 1000 XP на этой неделе и войди в топ-10.",
+    descriptionKk: "Осы аптада 1000 XP табыңыз және топ-10-ға кіріңіз.",
+    xpReward: 75,
+    icon: "🏅",
+  },
+
+  // DAILY LOGIN QUESTS
+  {
+    type: "daily_login",
+    title: "Consistency is Key",
+    titleRu: "Последовательность важна",
+    titleKk: "Ұзақтығы маңызды",
+    description: "Log in for 3 consecutive days to earn a bonus streak reward.",
+    descriptionRu: "Заходи 3 дня подряд и получи бонус за серию.",
+    descriptionKk: "3 күн подряд кіріп, серия бонусын алыңыз.",
+    xpReward: 35,
+    icon: "🔥",
+  },
+  {
+    type: "daily_login",
+    title: "Daily Starter",
+    titleRu: "Ежедневный старт",
+    titleKk: "Күнделік баста",
+    description: "Log in and complete at least 1 activity today.",
+    descriptionRu: "Войди и выполни хотя бы 1 активность сегодня.",
+    descriptionKk: "Кіріңіз және бүгін кем дегенде 1 белсенді орындаңыз.",
+    xpReward: 15,
+    icon: "✅",
+  },
+
+  // ROADMAP QUESTS
+  {
+    type: "roadmap",
+    title: "Roadmap Explorer",
+    titleRu: "Путешественник по дороге",
+    titleKk: "Жолдың зерттеушісі",
+    description: "Explore a career roadmap for your dream profession.",
+    descriptionRu: "Изучи дорожную карту для своей мечты.",
+    descriptionKk: "Арманы мансабыңыз үшін жолды картасын зерттеңіз.",
+    xpReward: 25,
+    icon: "🗺️",
   },
 ];
 

@@ -67,9 +67,79 @@ Keep responses concise (2-3 paragraphs max) and engaging. Ask follow-up question
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    // Allow unauthenticated access - return all NPCs
+    const { searchParams } = new URL(request.url);
+    const npcSlug = searchParams.get("npcSlug");
+    const language = searchParams.get("language") || "en";
 
-    // Get all NPC mentors from database
+    // Get conversation history for specific NPC mentor
+    if (npcSlug && session && session.role === "student") {
+      const npc = await prisma.npcMentor.findUnique({
+        where: { slug: npcSlug },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          profession: true,
+          professionRu: true,
+          professionKk: true,
+          introMessage: true,
+          introMessageRu: true,
+          introMessageKk: true,
+          avatarEmoji: true,
+          category: true,
+        },
+      });
+
+      if (!npc) {
+        return NextResponse.json({ error: "NPC not found" }, { status: 404 });
+      }
+
+      // Check if user has any messages with this NPC
+      const messageCount = await prisma.npcMessage.count({
+        where: { userId: session.userId, npcId: npc.id },
+      });
+
+      // If no messages, create the first intro message (mentor first-message feature)
+      if (messageCount === 0) {
+        const langMap = { en: "introMessage", ru: "introMessageRu", kk: "introMessageKk" };
+        const introField = langMap[language as keyof typeof langMap] || "introMessage";
+        const introMsg = npc[introField as keyof typeof npc] as string;
+
+        await prisma.npcMessage.create({
+          data: {
+            userId: session.userId,
+            npcId: npc.id,
+            role: "assistant",
+            content: introMsg,
+          },
+        });
+      }
+
+      // Get all messages (including the one we just created)
+      const history = await prisma.npcMessage.findMany({
+        where: { userId: session.userId, npcId: npc.id },
+        orderBy: { createdAt: "asc" },
+      });
+
+      return NextResponse.json({
+        npc: {
+          id: npc.id,
+          slug: npc.slug,
+          name: npc.name,
+          profession: npc.profession,
+          professionRu: npc.professionRu,
+          professionKk: npc.professionKk,
+          avatarEmoji: npc.avatarEmoji,
+          category: npc.category,
+        },
+        history: history.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+      });
+    }
+
+    // Get all NPC mentors from database (for listing all mentors)
     const npcs = await prisma.npcMentor.findMany({
       select: {
         id: true,
