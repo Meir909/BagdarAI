@@ -1,0 +1,131 @@
+{
+  "id": "design-path",
+  "name": "Design Path",
+  "description": "Master creative thinking, UX/UI design, and product design",
+  "category": "design",
+  "icon": "🎨",
+  "color": "#8B5CF6",
+  "skills": [
+    {
+      "skill_id": "creative-thinking",
+      "name": "Creative Thinking",
+      "description": "Develop creative problem-solving and ideation skills",
+      "xp_required": 0,
+      "level": 1,
+      "icon": "💡",
+      "parent_id": null,
+      "unlocks": ["ux-design", "visual-design"],
+      "category": "design"
+    },
+    {
+      "skill_id": "ux-design",
+      "name": "UX Design",
+      "description": "Understand user experience principles and research methods",
+      "xp_required": 50,
+      "level": 2,
+      "icon": "👤",
+      "parent_id": "creative-thinking",
+      "unlocks": ["user-research", "interaction-design"],
+      "category": "ux"
+    },
+    {
+      "skill_id": "visual-design",
+      "name": "Visual Design",
+      "description": "Master typography, color theory, and visual hierarchy",
+      "xp_required": 50,
+      "level": 2,
+      "icon": "🎭",
+      "parent_id": "creative-thinking",
+      "unlocks": ["ui-design", "branding"],
+      "category": "visual"
+    },
+    {
+      "skill_id": "user-research",
+      "name": "User Research",
+      "description": "Conduct user interviews and usability testing",
+      "xp_required": 100,
+      "level": 3,
+      "icon": "🔍",
+      "parent_id": "ux-design",
+      "unlocks": ["data-driven-design", "analytics"],
+      "category": "ux"
+    },
+    {
+      "skill_id": "interaction-design",
+      "name": "Interaction Design",
+      "description": "Design intuitive user interactions and workflows",
+      "xp_required": 150,
+      "level": 3,
+      "icon": "🤝",
+      "parent_id": "ux-design",
+      "unlocks": ["prototyping", "motion-design"],
+      "category": "ux"
+    },
+    {
+      "skill_id": "ui-design",
+      "name": "UI Design",
+      "description": "Create beautiful and functional user interfaces",
+      "xp_required": 150,
+      "level": 3,
+      "icon": "🖼️",
+      "parent_id": "visual-design",
+      "unlocks": ["design-systems", "responsive-design"],
+      "category": "ui"
+    },
+    {
+      "skill_id": "branding",
+      "name": "Branding",
+      "description": "Develop brand identity and visual systems",
+      "xp_required": 200,
+      "level": 4,
+      "icon": "🏷️",
+      "parent_id": "visual-design",
+      "unlocks": ["marketing-design", "strategy"],
+      "category": "visual"
+    },
+    {
+      "skill_id": "prototyping",
+      "name": "Prototyping",
+      "description": "Create interactive prototypes and design mockups",
+      "xp_required": 250,
+      "level": 4,
+      "icon": "📱",
+      "parent_id": "interaction-design",
+      "unlocks": ["user-testing", "design-tools"],
+      "category": "ux"
+    },
+    {
+      "skill_id": "design-systems",
+      "name": "Design Systems",
+      "description": "Build scalable design systems and component libraries",
+      "xp_required": 300,
+      "level": 5,
+      "icon": "🧩",
+      "parent_id": "ui-design",
+      "unlocks": ["design-ops", "collaboration"],
+      "category": "ui"
+    },
+    {
+      "skill_id": "product-design",
+      "name": "Product Design",
+      "description": "Lead product design from concept to launch",
+      "xp_required": 500,
+      "level": 6,
+      "icon": "📦",
+      "parent_id": "prototyping",
+      "unlocks": ["product-strategy", "leadership"],
+      "category": "product"
+    }
+  ],
+  "connections": [
+    {"from": "creative-thinking", "to": "ux-design"},
+    {"from": "creative-thinking", "to": "visual-design"},
+    {"from": "ux-design", "to": "user-research"},
+    {"from": "ux-design", "to": "interaction-design"},
+    {"from": "interaction-design", "to": "prototyping"},
+    {"from": "prototyping", "to": "product-design"},
+    {"from": "visual-design", "to": "ui-design"},
+    {"from": "visual-design", "to": "branding"},
+    {"from": "ui-design", "to": "design-systems"}
+  ]
+}

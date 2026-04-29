@@ -1,0 +1,356 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  director
+  curator
+  student
+  parent
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+  SCHOOL
+}
+
+model User {
+  id               String           @id @default(cuid())
+  role             Role
+  name             String
+  email            String?          @unique
+  phone            String?          @unique
+  passwordHash     String?
+  schoolId         String?
+  school           School?          @relation(fields: [schoolId], references: [id])
+  studentClass     String?
+  studentCode      String?          @unique
+  subscriptionPlan SubscriptionPlan @default(FREE)
+  aiRequestsUsed   Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Curator → Students relationship
+  curatorId       String?
+  curator         User?   @relation("CuratorStudents", fields: [curatorId], references: [id])
+  curatedStudents User[]  @relation("CuratorStudents")
+
+  // Parent → Child relationship
+  childId  String? @unique
+  child    User?   @relation("ParentChild", fields: [childId], references: [id])
+  parentOf User?   @relation("ParentChild")
+
+  careerTests        CareerTest[]
+  careerResults      CareerResult[]
+  chatHistory        ChatMessage[]
+  studentBadges      StudentBadge[]
+  auditLogs          AuditLog[]
+  xp                 UserXP?
+  simulationResults  SimulationResult[]
+  userQuests         UserQuest[]
+  npcMessages        NpcMessage[]
+  jobSimulationResults UserSimulationResult[]
+
+  @@index([role])
+  @@index([schoolId])
+}
+
+model School {
+  id             String   @id @default(cuid())
+  name           String
+  city           String
+  schoolCode     String   @unique
+  invitationCode String   @unique
+  directorPhone  String?
+  users          User[]
+  createdAt      DateTime @default(now())
+}
+
+model CareerTest {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers     Json
+  completedAt DateTime     @default(now())
+  result      CareerResult?
+
+  @@index([userId])
+}
+
+model CareerResult {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testId             String   @unique
+  test               CareerTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+  personalitySummary String
+  topCareers         Json
+  strengths          Json
+  skillsToDevelop    Json
+  roadmap            Json
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Profession {
+  id           String @id @default(cuid())
+  name         String
+  nameRu       String
+  nameKk       String
+  category     String
+  description  String
+  descriptionRu String
+  descriptionKk String
+  salary       String
+  futureDemand Int
+  skills       Json
+  universities Json   @default("[]")
+
+  roadmap      CareerRoadmap?
+  simulations  JobSimulation[]
+
+  @@index([category])
+}
+
+model Badge {
+  id       String @id @default(cuid())
+  name     String
+  nameRu   String
+  nameKk   String
+  icon     String
+  trigger  String
+
+  studentBadges StudentBadge[]
+}
+
+model StudentBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ─── GAME SYSTEM ─────────────────────────────────────────────────────────────
+
+model UserXP {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xp        Int      @default(0)
+  level     Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  @@index([xp])
+}
+
+// ─── CAREER SIMULATIONS ──────────────────────────────────────────────────────
+
+model CareerSimulation {
+  id            String   @id @default(cuid())
+  careerId      String
+  title         String
+  titleRu       String
+  titleKk       String
+  description   String
+  descriptionRu String
+  descriptionKk String
+  difficulty    String   // easy | medium | hard
+  estimatedTime Int      // minutes
+  xpReward      Int      @default(50)
+  scenarios     Json     // SimulationScenario[]
+  category      String
+  createdAt     DateTime @default(now())
+
+  results SimulationResult[]
+
+  @@index([careerId])
+  @@index([category])
+}
+
+model SimulationResult {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  simulationId String
+  simulation   CareerSimulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  score        Int
+  maxScore     Int
+  choices      Json             // which options the user picked
+  xpEarned     Int
+  completedAt  DateTime         @default(now())
+
+  @@unique([userId, simulationId])
+  @@index([userId])
+}
+
+// ─── DAILY QUESTS ────────────────────────────────────────────────────────────
+
+model DailyQuest {
+  id          String @id @default(cuid())
+  type        String // simulation | profession | mentor | test | chat
+  title       String
+  titleRu     String
+  titleKk     String
+  description String
+  descriptionRu String
+  descriptionKk String
+  xpReward    Int
+  icon        String @default("⚡")
+
+  userQuests UserQuest[]
+}
+
+model UserQuest {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questId     String
+  quest       DailyQuest @relation(fields: [questId], references: [id], onDelete: Cascade)
+  completed   Boolean    @default(false)
+  completedAt DateTime?
+  assignedAt  DateTime   @default(now())
+  expiresAt   DateTime   // next day 00:00
+
+  @@unique([userId, questId, assignedAt])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── NPC MENTORS ─────────────────────────────────────────────────────────────
+
+model NpcMentor {
+  id           String @id @default(cuid())
+  slug         String @unique
+  name         String
+  profession   String
+  professionRu String
+  professionKk String
+  personality  String
+  introMessage String
+  introMessageRu String
+  introMessageKk String
+  avatarEmoji  String @default("🤖")
+  category     String
+
+  messages NpcMessage[]
+}
+
+model NpcMessage {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  npcId     String
+  npc       NpcMentor @relation(fields: [npcId], references: [id], onDelete: Cascade)
+  role      String    // user | assistant
+  content   String
+  createdAt DateTime  @default(now())
+
+  @@index([userId, npcId])
+}
+
+// ─── CAREER ROADMAP ──────────────────────────────────────────────────────────
+
+model CareerRoadmap {
+  id            String   @id @default(cuid())
+  professionId  String   @unique
+  profession    Profession @relation(fields: [professionId], references: [id], onDelete: Cascade)
+
+  // 6 stages: School, Exams, University, Skills, Experience, Career Growth
+  stages        Json     // Array of stages with subject/skills/timeline
+
+  requiredSkills String[]
+  universities   Json     // Array of {name, country, minScore, probability}
+  salaryInfo     Json     // {country: salary_range}
+  timeline       Int      // Years to reach profession from now
+
+  createdAt     DateTime  @default(now())
+
+  @@index([professionId])
+}
+
+// ─── JOB SIMULATIONS ─────────────────────────────────────────────────────────
+
+model JobSimulation {
+  id            String   @id @default(cuid())
+  professionId  String
+  profession    Profession @relation(fields: [professionId], references: [id], onDelete: Cascade)
+
+  title         String
+  titleRu       String
+  titleKk       String
+  description   String
+  descriptionRu String
+  descriptionKk String
+
+  missions      Json     // Array of {id, title, scenario, options, correctAnswers, xpReward}
+  difficulty    String   // easy | medium | hard
+  xpReward      Int      @default(100)
+
+  results       UserSimulationResult[]
+  createdAt     DateTime  @default(now())
+
+  @@index([professionId])
+}
+
+model UserSimulationResult {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  simulationId  String
+  simulation    JobSimulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+
+  missionResults Json    // Array of {missionId, userAnswer, feedback, xpEarned, isCorrect}
+  score         Int      // Total score
+  maxScore      Int      // Maximum possible score
+  feedback      String?  // AI final feedback
+  strengths     String[] // What user did well
+  improvements  String[] // Areas to improve
+
+  completedAt   DateTime @default(now())
+
+  @@unique([userId, simulationId])
+  @@index([userId])
+}
+

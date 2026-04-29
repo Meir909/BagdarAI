@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(node_modules/.bin/tsc:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(python3:*)",
+      "Bash(flutter --version:*)",
+      "Bash(dart --version:*)",
+      "Read(//c/Users/nurmi/OneDrive/Desktop/портфолио/**)",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\nurmi\\.claude\\projects\\c--Users-nurmi-OneDrive-Desktop-----------BagdarAI-master\\memory",
+      "c:\\Users\\nurmi\\OneDrive\\Desktop\\портфолио\\bagdar_flutter_web"
+    ]
+  }
+}

@@ -1,0 +1,171 @@
+// Add these models to your existing Prisma schema
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  category    String
+  xpRequired  Int      @default(0) @map("xp_required")
+  level       Int      @default(1)
+  icon        String?
+  parentId    String?  @map("parent_id")
+  unlocks     String[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent      Skill?   @relation("SkillHierarchy", fields: [parentId], references: [id])
+  children    Skill[]  @relation("SkillHierarchy")
+  userSkills  UserSkill[]
+
+  @@index([category])
+  @@index([parentId])
+}
+
+model UserSkill {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  skillId     String    @map("skill_id")
+  unlockedAt  DateTime? @map("unlocked_at")
+  completedAt DateTime? @map("completed_at")
+  progress    Int       @default(0)
+  xpEarned    Int       @default(0) @map("xp_earned")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill       Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId])
+}
+
+model SkillTreePath {
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  category      String
+  icon          String?
+  color         String?
+  prerequisites String[]
+  totalSkills   Int      @default(0) @map("total_skills")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt
+}
+
+model MiniGame {
+  id          String   @id @default(cuid())
+  career      String
+  title       String
+  description String
+  difficulty  String
+  duration    Int      @default(300) // seconds
+  tasks       Json     @default("[]")
+  xpReward    Int      @default(30) @map("xp_reward")
+  category    String
+  icon        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  results     MiniGameResult[]
+
+  @@index([career])
+  @@index([category])
+}
+
+model MiniGameResult {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  gameId        String   @map("game_id")
+  score         Int      @default(0)
+  tasksCompleted Int     @default(0) @map("tasks_completed")
+  totalTasks    Int      @default(0) @map("total_tasks")
+  timeSpent     Int      @default(0) @map("time_spent")
+  xpEarned      Int      @default(0) @map("xp_earned")
+  completedAt   DateTime @default(now()) @map("completed_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game          MiniGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([gameId])
+}
+
+model MentorMessage {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  role      String   // 'user' | 'assistant'
+  content   String
+  context   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model XPProgress {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  totalXP       Int      @default(0) @map("total_xp")
+  currentLevel  Int      @default(1) @map("current_level")
+  levelXP       Int      @default(0) @map("level_xp")
+  nextLevelXP   Int      @default(100) @map("next_level_xp")
+  achievements  Json     @default("[]")
+  dailyXP       Int      @default(0) @map("daily_xp")
+  weeklyXP      Int      @default(0) @map("weekly_xp")
+  lastActiveAt  DateTime @default(now()) @map("last_active_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DailyQuest {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        String   // 'mini_game' | 'skill_unlock' | 'mentor_chat'
+  target      Int
+  xpReward    Int      @default(10) @map("xp_reward")
+  active      Boolean  @default(true)
+  date        DateTime @db.Date
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([date])
+}
+
+model UserDailyQuest {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  questId     String    @map("quest_id")
+  progress    Int       @default(0)
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quest       DailyQuest @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questId])
+}
+
+// Update existing User model to include new relations
+model User {
+  // ... existing fields ...
+  
+  // New gamification relations
+  xpProgress     XPProgress?
+  userSkills     UserSkill[]
+  gameResults    MiniGameResult[]
+  mentorMessages MentorMessage[]
+  userQuests     UserDailyQuest[]
+}
