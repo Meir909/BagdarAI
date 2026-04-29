@@ -52,21 +52,21 @@ INSERT INTO user_xp (user_id, xp, level) VALUES
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee3', 50, 1)
 ON CONFLICT (user_id) DO NOTHING;
 
--- Create badges
+-- Create badges (using trigger as ID for upsert stability)
 INSERT INTO badges (id, name, name_ru, name_kk, icon, trigger) VALUES
-('badge-first-step', 'First Step', 'Первый шаг', 'Бірінші қадам', '🏆', 'test_complete'),
-('badge-explorer', 'Explorer', 'Исследователь', 'Зерттеуші', '🔍', 'profession_explore'),
-('badge-chat-master', 'Chat Master', 'Мастер чата', 'Чат шебері', '💬', 'chat_first'),
-('badge-career-pro', 'Career Pro', 'Карьерный про', 'Мансап шебері', '⭐', 'profile_complete'),
-('badge-knowledge', 'Knowledge Seeker', 'Искатель знаний', 'Білім іздеуші', '📖', 'roadmap_generated')
+('11111111-1111-1111-1111-111111111111', 'First Step', 'Первый шаг', 'Бірінші қадам', '🏆', 'test_complete'),
+('22222222-2222-2222-2222-222222222222', 'Explorer', 'Исследователь', 'Зерттеуші', '🔍', 'profession_explore'),
+('33333333-3333-3333-3333-333333333333', 'Chat Master', 'Мастер чата', 'Чат шебері', '💬', 'chat_first'),
+('44444444-4444-4444-4444-444444444444', 'Career Pro', 'Карьерный про', 'Мансап шебері', '⭐', 'profile_complete'),
+('55555555-5555-5555-5555-555555555555', 'Knowledge Seeker', 'Искатель знаний', 'Білім іздеуші', '📖', 'roadmap_generated')
 ON CONFLICT (id) DO NOTHING;
 
 -- Assign some badges to students
 INSERT INTO student_badges (user_id, badge_id) VALUES
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'badge-first-step'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'badge-explorer'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee2', 'badge-first-step'),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee3', 'badge-first-step')
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '11111111-1111-1111-1111-111111111111'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '22222222-2222-2222-2222-222222222222'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee2', '11111111-1111-1111-1111-111111111111'),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee3', '11111111-1111-1111-1111-111111111111')
 ON CONFLICT (user_id, badge_id) DO NOTHING;
 
 -- Create audit log entry
