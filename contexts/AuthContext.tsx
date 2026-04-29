@@ -107,20 +107,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (_role: UserRole, data: Record<string, string>): Promise<{ success: boolean; error?: string }> => {
+    console.log("[AuthContext] login called with:", { email: data.email, password: data.password ? "***" : undefined });
+    
     try {
       const { email, password } = data;
       
       if (!email || !password) {
+        console.log("[AuthContext] Missing email or password");
         return { success: false, error: "Email and password required" };
       }
 
+      console.log("[AuthContext] Sending fetch to /api/auth/login");
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
+      console.log("[AuthContext] Fetch completed, status:", res.status);
 
       const result = await res.json();
+      console.log("[AuthContext] Response parsed, success:", result.success);
 
       if (res.ok && result.success) {
         setUser(result.user);
@@ -131,7 +137,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       return { success: false, error: result.error || "Login failed" };
-    } catch {
+    } catch (err) {
+      console.error("[AuthContext] Login error:", err);
       return { success: false, error: "Network error" };
     }
   };
