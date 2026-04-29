@@ -1,8 +1,6 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
-
-const COOKIE_NAME = "bagdarai-token";
 
 const PROTECTED_ROUTES: Record<string, string[]> = {
   "/dashboard": ["student"],
@@ -16,36 +14,56 @@ const PROTECTED_ROUTES: Record<string, string[]> = {
 };
 
 export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
+
+  // Create Supabase client
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  // Check auth session
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { pathname } = request.nextUrl;
 
   const matchedRoute = Object.keys(PROTECTED_ROUTES).find((route) =>
     pathname.startsWith(route)
   );
 
-  if (!matchedRoute) return NextResponse.next();
+  if (!matchedRoute) return supabaseResponse;
 
-  const token = request.cookies.get(COOKIE_NAME)?.value;
-
-  if (!token) {
+  if (!user) {
     return NextResponse.redirect(new URL("/auth", request.url));
   }
 
-  try {
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "fallback-secret"
-    );
-    const { payload } = await jwtVerify(token, secret);
-    const role = payload.role as string;
+  // Get user role from user metadata
+  const role = user.user_metadata?.role as string;
 
-    const allowedRoles = PROTECTED_ROUTES[matchedRoute];
-    if (!allowedRoles.includes(role)) {
-      return NextResponse.redirect(new URL("/auth", request.url));
-    }
-
-    return NextResponse.next();
-  } catch {
+  const allowedRoles = PROTECTED_ROUTES[matchedRoute];
+  if (!allowedRoles.includes(role)) {
     return NextResponse.redirect(new URL("/auth", request.url));
   }
+
+  return supabaseResponse;
 }
 
 export const config = {
