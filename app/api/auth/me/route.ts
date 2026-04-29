@@ -1,48 +1,26 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
   try {
-    const session = await getSession();
-    if (!session) {
+    const supabase = await createClient();
+
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    if (error || !user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: {
-        school: { select: { id: true, name: true, city: true } },
-        careerResults: {
-          where: { isActive: true },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-        studentBadges: {
-          include: { badge: true },
-        },
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       user: {
         id: user.id,
-        role: user.role,
-        name: user.name,
+        role: user.user_metadata?.role,
+        name: user.user_metadata?.name || user.email,
         email: user.email,
-        phone: user.phone,
-        schoolId: user.schoolId,
-        schoolName: user.school?.name,
-        studentClass: user.studentClass,
-        studentCode: user.studentCode,
-        subscriptionPlan: user.subscriptionPlan,
-        aiRequestsUsed: user.aiRequestsUsed,
-        careerResult: user.careerResults[0] || null,
-        badges: user.studentBadges.map((sb) => ({ ...sb.badge, earnedAt: sb.earnedAt })),
+        schoolId: user.user_metadata?.school_id,
+        schoolName: user.user_metadata?.school_name,
+        studentClass: user.user_metadata?.student_class,
+        studentCode: user.user_metadata?.student_code,
       },
     });
   } catch (error) {

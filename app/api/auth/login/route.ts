@@ -1,107 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { signToken, setAuthCookie } from "@/lib/auth";
-import bcrypt from "bcryptjs";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { role, email, password, phone, schoolCode, invitationCode, remember } = body;
+    const { email, password } = body;
 
-    let user;
-
-    switch (role) {
-      case "admin": {
-        if (!email || !password) {
-          return NextResponse.json({ error: "Email and password required" }, { status: 400 });
-        }
-        user = await prisma.user.findUnique({ where: { email } });
-        if (!user || user.role !== "admin") {
-          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-        }
-        const valid = await bcrypt.compare(password, user.passwordHash || "");
-        if (!valid) {
-          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-        }
-        break;
-      }
-
-      case "director": {
-        if (!phone || !schoolCode || !invitationCode) {
-          return NextResponse.json({ error: "Phone, school code, and invitation code are required" }, { status: 400 });
-        }
-
-        const school = await prisma.school.findUnique({ where: { schoolCode } });
-        if (!school) {
-          return NextResponse.json({ error: "invalid_school_code" }, { status: 400 });
-        }
-        if (school.invitationCode !== invitationCode) {
-          return NextResponse.json({ error: "invalid_invitation_code" }, { status: 400 });
-        }
-
-        user = await prisma.user.findFirst({ where: { phone, role: "director" } });
-        if (!user) {
-          return NextResponse.json({ error: "phone_not_found" }, { status: 401 });
-        }
-        if (user.schoolId !== school.id) {
-          return NextResponse.json({ error: "invalid_school_code" }, { status: 401 });
-        }
-        break;
-      }
-
-      case "curator":
-      case "parent": {
-        if (!email || !password) {
-          return NextResponse.json({ error: "Email and password required" }, { status: 400 });
-        }
-        user = await prisma.user.findUnique({ where: { email } });
-        if (!user || user.role !== role) {
-          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-        }
-        const valid = await bcrypt.compare(password, user.passwordHash || "");
-        if (!valid) {
-          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-        }
-        break;
-      }
-
-      default:
-        return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email and password required" }, { status: 400 });
     }
 
+    const supabase = await createClient();
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+
+    const user = data.user;
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
 
-    const token = signToken({ userId: user.id, role: user.role, email: user.email ?? undefined, name: user.name }, !!remember);
-    const cookieConfig = setAuthCookie(token, !!remember);
+    // Get user metadata
+    const role = user.user_metadata?.role;
+    const schoolId = user.user_metadata?.school_id;
+    const schoolName = user.user_metadata?.school_name;
 
-    // Get school info
-    let schoolName = "";
-    if (user.schoolId) {
-      const school = await prisma.school.findUnique({ where: { id: user.schoolId } });
-      schoolName = school?.name || "";
-    }
-
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       user: {
         id: user.id,
-        role: user.role,
-        name: user.name,
+        role: role,
+        name: user.user_metadata?.name || user.email,
         email: user.email,
-        phone: user.phone,
-        schoolId: user.schoolId,
-        schoolName,
-        studentClass: user.studentClass,
-        studentCode: user.studentCode,
-        subscriptionPlan: user.subscriptionPlan,
-        aiRequestsUsed: user.aiRequestsUsed,
+        schoolId: schoolId,
+        schoolName: schoolName,
+        studentClass: user.user_metadata?.student_class,
+        studentCode: user.user_metadata?.student_code,
       },
     });
-
-    response.cookies.set(cookieConfig.name, cookieConfig.value, cookieConfig.options as Parameters<typeof response.cookies.set>[2]);
-    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
