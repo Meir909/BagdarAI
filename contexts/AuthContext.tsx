@@ -106,12 +106,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const login = async (role: UserRole, data: Record<string, string>): Promise<{ success: boolean; error?: string }> => {
+  const login = async (_role: UserRole, data: Record<string, string>): Promise<{ success: boolean; error?: string }> => {
     try {
+      const { email, password } = data;
+      
+      if (!email || !password) {
+        return { success: false, error: "Email and password required" };
+      }
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, ...data }),
+        body: JSON.stringify({ email, password }),
       });
 
       const result = await res.json();
@@ -124,7 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { success: true };
       }
 
-      return { success: false, error: result.error };
+      return { success: false, error: result.error || "Login failed" };
     } catch {
       return { success: false, error: "Network error" };
     }

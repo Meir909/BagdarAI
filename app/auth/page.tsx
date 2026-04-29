@@ -54,20 +54,11 @@ export default function AuthPage() {
 
     let result: { success: boolean; error?: string };
 
-    if (selectedRole === "admin") {
-      result = await login("admin", form);
-    } else if (selectedRole === "director") {
-      result = await login("director", form);
-    } else if (selectedRole === "curator") {
-      // Curator registers
-      result = await register("curator", form);
-    } else if (selectedRole === "student") {
-      result = await register("student", form);
-    } else if (selectedRole === "parent") {
-      // Try login first, if user doesn't exist register
-      result = await register("parent", form);
+    // For now, all roles use email/password login via Supabase
+    if (selectedRole && form.email && form.password) {
+      result = await login(selectedRole as UserRole, form);
     } else {
-      result = { success: false, error: "Unknown role" };
+      result = { success: false, error: "Email and password required" };
     }
 
     setLoading(false);
@@ -78,7 +69,7 @@ export default function AuthPage() {
     } else {
       const errKey = result.error || "";
       const translated = errorMap[errKey]?.[language] || errKey;
-      setError(translated);
+      setError(translated || errKey);
     }
   };
 
@@ -156,42 +147,9 @@ export default function AuthPage() {
             </div>
 
             <div className="space-y-4">
-              {selectedRole === "admin" && (
-                <>
-                  <Field label={{ en: "Email", ru: "Email", kk: "Email" }[language]} value={form.email || ""} onChange={(v) => handleFieldChange("email", v)} type="email" />
-                  <Field label={{ en: "Password", ru: "Пароль", kk: "Құпия сөз" }[language]} value={form.password || ""} onChange={(v) => handleFieldChange("password", v)} type="password" />
-                </>
-              )}
-              {selectedRole === "director" && (
-                <>
-                  <Field label={{ en: "Phone Number", ru: "Номер телефона", kk: "Телефон нөмірі" }[language]} value={form.phone || ""} onChange={(v) => handleFieldChange("phone", v)} placeholder="+77001234567" />
-                  <Field label={{ en: "School Code", ru: "Код школы", kk: "Мектеп коды" }[language]} value={form.schoolCode || ""} onChange={(v) => handleFieldChange("schoolCode", v)} placeholder="SCHOOL-2024-ASTANA" />
-                  <Field label={{ en: "Invitation Code", ru: "Код приглашения", kk: "Шақыру коды" }[language]} value={form.invitationCode || ""} onChange={(v) => handleFieldChange("invitationCode", v)} placeholder="INV-NIS-001" />
-                </>
-              )}
-              {selectedRole === "curator" && (
-                <>
-                  <Field label={{ en: "Full Name", ru: "Полное имя", kk: "Толық атыңыз" }[language]} value={form.name || ""} onChange={(v) => handleFieldChange("name", v)} />
-                  <Field label={{ en: "Email", ru: "Email", kk: "Email" }[language]} value={form.email || ""} onChange={(v) => handleFieldChange("email", v)} type="email" />
-                  <Field label={{ en: "Password", ru: "Пароль", kk: "Құпия сөз" }[language]} value={form.password || ""} onChange={(v) => handleFieldChange("password", v)} type="password" />
-                  <Field label={{ en: "Invitation Code", ru: "Код приглашения", kk: "Шақыру коды" }[language]} value={form.invitationCode || ""} onChange={(v) => handleFieldChange("invitationCode", v)} placeholder="INV-NIS-001" />
-                </>
-              )}
-              {selectedRole === "student" && (
-                <>
-                  <Field label={{ en: "Full Name", ru: "Полное имя", kk: "Толық атыңыз" }[language]} value={form.name || ""} onChange={(v) => handleFieldChange("name", v)} />
-                  <Field label={{ en: "Class (e.g. 10A)", ru: "Класс (напр. 10A)", kk: "Сынып (мыс. 10A)" }[language]} value={form.studentClass || ""} onChange={(v) => handleFieldChange("studentClass", v)} placeholder="10A" />
-                  <Field label={{ en: "School Code", ru: "Код школы", kk: "Мектеп коды" }[language]} value={form.schoolCode || ""} onChange={(v) => handleFieldChange("schoolCode", v)} placeholder="SCHOOL-2024-ASTANA" />
-                </>
-              )}
-              {selectedRole === "parent" && (
-                <>
-                  <Field label={{ en: "Full Name", ru: "Полное имя", kk: "Толық атыңыз" }[language]} value={form.name || ""} onChange={(v) => handleFieldChange("name", v)} />
-                  <Field label={{ en: "Email", ru: "Email", kk: "Email" }[language]} value={form.email || ""} onChange={(v) => handleFieldChange("email", v)} type="email" />
-                  <Field label={{ en: "Password", ru: "Пароль", kk: "Құпия сөз" }[language]} value={form.password || ""} onChange={(v) => handleFieldChange("password", v)} type="password" />
-                  <Field label={{ en: "Student Code (optional)", ru: "Код ученика (необяз.)", kk: "Оқушы коды (міндетті емес)" }[language]} value={form.studentCode || ""} onChange={(v) => handleFieldChange("studentCode", v)} placeholder="STU-00001" />
-                </>
-              )}
+              {/* Simple email/password form for all roles (Supabase Auth) */}
+              <Field label={{ en: "Email", ru: "Email", kk: "Email" }[language]} value={form.email || ""} onChange={(v) => handleFieldChange("email", v)} type="email" />
+              <Field label={{ en: "Password", ru: "Пароль", kk: "Құпия сөз" }[language]} value={form.password || ""} onChange={(v) => handleFieldChange("password", v)} type="password" />
             </div>
 
             {error && (
