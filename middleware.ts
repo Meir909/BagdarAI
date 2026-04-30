@@ -2,6 +2,12 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const ALLOWED_ORIGINS = [
+  "https://bagdarai-app.vercel.app",
+  "http://localhost:3001",
+  "http://localhost:3002",
+];
+
 const PROTECTED_ROUTES: Record<string, string[]> = {
   "/dashboard": ["student"],
   "/test": ["student"],
@@ -14,9 +20,30 @@ const PROTECTED_ROUTES: Record<string, string[]> = {
 };
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  const origin = request.headers.get("origin") ?? "";
+  const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin);
+
+  // Handle CORS preflight for /api/* routes
+  if (request.method === "OPTIONS" && request.nextUrl.pathname.startsWith("/api/")) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": isAllowedOrigin ? origin : "",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
+
+  let supabaseResponse = NextResponse.next({ request });
+
+  // Attach CORS headers to all /api/* responses
+  if (request.nextUrl.pathname.startsWith("/api/") && isAllowedOrigin) {
+    supabaseResponse.headers.set("Access-Control-Allow-Origin", origin);
+    supabaseResponse.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    supabaseResponse.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  }
 
   // Create Supabase client
   const supabase = createServerClient(
@@ -68,6 +95,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/api/:path*",
     "/dashboard/:path*",
     "/test/:path*",
     "/analysis/:path*",
