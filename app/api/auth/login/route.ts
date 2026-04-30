@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
   console.log("[LOGIN] Received login request");
@@ -15,8 +15,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password required" }, { status: 400 });
     }
 
+    // Create direct Supabase client without cookies
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.log("[LOGIN] Missing Supabase env vars");
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    }
+
     console.log("[LOGIN] Creating Supabase client...");
-    const supabase = await createClient();
+    const supabase = createClient(supabaseUrl, supabaseKey);
     console.log("[LOGIN] Supabase client created");
 
     console.log("[LOGIN] Calling signInWithPassword...");

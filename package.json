@@ -11,7 +11,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "npx ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "seed:mock": "node scripts/seed-mock-data.js"
   },
   "keywords": [],
   "author": "",
