@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GraduationCap, Users, BookOpen, UserCheck, ArrowLeft, Shield, Lock } from "lucide-react";
 import PageTransition from "@/components/PageTransition";
+import AuthAssistant from "@/components/AuthAssistant";
 
 const roleConfig = [
   { role: "student" as UserRole, icon: GraduationCap, color: "text-blue-500", bg: "bg-blue-500/10", label: { en: "Student", ru: "Ученик", kk: "Оқушы" }, desc: { en: "Enter your career journey", ru: "Начни карьерный путь", kk: "Мансап жолыңды баста" } },
@@ -49,6 +50,7 @@ export default function AuthPage() {
   };
 
   const handleSubmit = async () => {
+    console.log("[AuthPage] handleSubmit called, role:", selectedRole, "form:", { email: form.email, password: form.password ? "***" : undefined });
     setLoading(true);
     setError("");
 
@@ -56,11 +58,15 @@ export default function AuthPage() {
 
     // For now, all roles use email/password login via Supabase
     if (selectedRole && form.email && form.password) {
+      console.log("[AuthPage] Calling login...");
       result = await login(selectedRole as UserRole, form);
+      console.log("[AuthPage] Login result:", result);
     } else {
+      console.log("[AuthPage] Missing role, email or password");
       result = { success: false, error: "Email and password required" };
     }
 
+    console.log("[AuthPage] Setting loading to false");
     setLoading(false);
 
     if (result.success) {
@@ -171,6 +177,7 @@ export default function AuthPage() {
           </motion.div>
         </div>
       </div>
+      <AuthAssistant />
     </PageTransition>
   );
 }
